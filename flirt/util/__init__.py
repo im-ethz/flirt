@@ -1,0 +1,1 @@
+from .io import is_file_like
