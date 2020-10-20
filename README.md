@@ -4,16 +4,18 @@
 [![Documentation Status](https://readthedocs.org/projects/flirt/badge/?version=latest)](https://flirt.readthedocs.io/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/im-ethz/flirt/master)
 
-![](./docs/img/flirt-header.png)
+![](https://github.com/im-ethz/flirt/raw/master/docs/img/flirt-header.png)
 
-FLIRT is a feature generation toolkit for wearable data such as that from your smartwatch or smart ring. Here you can learn how
-to easily transform wearable data into meaningful features which can then be used for example in machine learning or AI models.
+⭐️ **Simple. Robust. Powerful.** 
+
+FLIRT is a feature generation toolkit for wearable data such as that from your smartwatch or smart ring. With FLIRT you can
+easily transform wearable data into meaningful features which can then be used for example in machine learning or AI models.
 
 In contrast to other existing toolkits, FLIRT (1) focuses on physiological data recorded with
-**consumer-grade wearables** and (2) calculates features based on a **sliding window approach**.
+(consumer) **wearables** and (2) calculates features based on a **sliding-window approach**.
 FLIRT is an easy-to-use, robust and efficient feature generation toolkit for your wearable device!
 
-![FLIRT Workflow](./docs/img/flirt-workflow.png)
+![FLIRT Workflow](https://github.com/im-ethz/flirt/raw/master/docs/img/flirt-workflow.png)
 
 ➡️ **Are you ready to FLIRT with your wearable data?**
 
@@ -59,7 +61,7 @@ Check out the [documentation](https://flirt.readthedocs.io/) and exemplary [Jupy
 
 # Roadmap
 Things FLIRT will be able to do in the future:
-  - [ ] Use FLIRT with Oura's smartring and other consumer-grade wearable devices
+  - [ ] Use FLIRT with Oura's smart ring and other consumer-grade wearable devices
   - [ ] Use FLIRT with Apple Health to derive meaningful features from long-term data recordings
   - [ ] Feature generation for additional sensor modalities such as: blood oxygen saturation, blood volume changes, respiration rate, and step counts
 
@@ -70,7 +72,7 @@ Check out all [authors](https://github.com/im-ethz/flirt/tree/master/docs/author
 
 # FAQs
 - **How does FLIRT distinguish from other physiological data processing packages such as neurokit?**  \
-    While FLIRT works with phsyological data like other packages, it places special emphasis on the inherent challenges
+    While FLIRT works with physiological data like other packages, it places special emphasis on the inherent challenges
     of data processing obtained from (consumer) wearable devices such as smartwaches instead of professional,
     medical-grade recording devices such as ECGs or EEGs. As an example, when processing data from smartwatches, one
     could be confronted with inaccurate data, which needs artifact removal, or measurement gaps, which need to be

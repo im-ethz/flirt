@@ -8,6 +8,5 @@
 # joblib>=0.14.1
 # tqdm>=4.43
 # ishneholterlib>=2020.5.29
-# nolds>=0.5.2
 # numba>=0.49.1
 # astropy>=4.0.3
