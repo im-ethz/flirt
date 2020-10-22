@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>flirt.hrv.feature_calculation &mdash; FLIRT 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> FLIRT
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../functions.html">Functions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FLIRT</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>flirt.hrv.feature_calculation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for flirt.hrv.feature_calculation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">hrvanalysis</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+<span class="c1"># import the nicer version of TQDM if being executed in a notebook</span>
+<span class="c1"># from tqdm.auto import trange</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+
+<span class="kn">from</span> <span class="nn">..stats.common</span> <span class="kn">import</span> <span class="n">__get_stats</span>
+<span class="kn">from</span> <span class="nn">.nl_features</span> <span class="kn">import</span> <span class="n">get_nl_features</span>
+
+
+<div class="viewcode-block" id="get_features"><a class="viewcode-back" href="../../../functions.html#flirt.hrv.get_features">[docs]</a><span class="k">def</span> <span class="nf">get_features</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">domains</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">clean_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_cores</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes HRV features.</span>
+
+<span class="sd">    Computes HRV features for different domains (time-domain, frequency-domain, non-linear, statistical).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : pd.Series</span>
+<span class="sd">        input IBIs</span>
+<span class="sd">    epoch_width : int</span>
+<span class="sd">        the epoch width (aka window size) in seconds to consider</span>
+<span class="sd">    domains : List[str]</span>
+<span class="sd">        domains to calculate (possible values: &quot;td&quot;, &quot;fd&quot;, &quot;nl&quot;, &quot;stat&quot;)</span>
+<span class="sd">    threshold : float</span>
+<span class="sd">        the relative portion of IBIs that need to be present in a window for processing. Otherwise, the window is dropped</span>
+<span class="sd">    clean_data : bool, optional</span>
+<span class="sd">        whether obviously invalid IBIs should be removed before processing, by default True</span>
+<span class="sd">    num_cores : int, optional</span>
+<span class="sd">        number of cores to use for parallel processing, by default use all available</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        HRV features</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; hrv_features = flirt.hrv.get_features(ibis, 60, [&quot;td&quot;, &quot;fd&quot;, &quot;stat&quot;], 0.8)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">num_cores</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">num_cores</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">clean_data</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cleaning data...&quot;</span><span class="p">)</span>
+        <span class="n">clean_data</span> <span class="o">=</span> <span class="n">__clean_artifacts</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Not cleaning data&quot;</span><span class="p">)</span>
+        <span class="n">clean_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">td_features</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">fd_features</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nl_features</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">stat_features</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">domain</span> <span class="ow">in</span> <span class="n">domains</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">domain</span> <span class="o">==</span> <span class="s2">&quot;td&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculate Time Domain Features&quot;</span><span class="p">)</span>
+            <span class="n">td_features</span> <span class="o">=</span> <span class="n">__generate_features_for_domain</span><span class="p">(</span><span class="n">clean_data</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;td&#39;</span><span class="p">)</span>
+            <span class="n">td_features</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;datetime&#39;</span>
+        <span class="k">elif</span> <span class="n">domain</span> <span class="o">==</span> <span class="s2">&quot;fd&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculate Frequency Domain Features&quot;</span><span class="p">)</span>
+            <span class="n">fd_features</span> <span class="o">=</span> <span class="n">__generate_features_for_domain</span><span class="p">(</span><span class="n">clean_data</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;fd&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">domain</span> <span class="o">==</span> <span class="s2">&quot;nl&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculate Non-linear Features&quot;</span><span class="p">)</span>
+            <span class="n">nl_features</span> <span class="o">=</span> <span class="n">__generate_features_for_domain</span><span class="p">(</span><span class="n">clean_data</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;nl&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">domain</span> <span class="o">==</span> <span class="s2">&quot;stat&quot;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calculate Stat Domain Features&quot;</span><span class="p">)</span>
+            <span class="n">stat_features</span> <span class="o">=</span> <span class="n">__generate_features_for_domain</span><span class="p">(</span><span class="n">clean_data</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;stat&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;invalid feature domain: &quot;</span> <span class="o">+</span> <span class="n">domain</span><span class="p">)</span>
+
+    <span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">td_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">td_features</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fd_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fd_features</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nl_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nl_features</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stat_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stat_features</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">features</span></div>
+
+
+<span class="k">def</span> <span class="nf">__clean_artifacts</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cleans obiously illegal IBI values (artefacts) from a list</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : pd.Series</span>
+<span class="sd">        the IBI list</span>
+<span class="sd">    threshold : float, optional</span>
+<span class="sd">        the maixmum relative deviation between subsequent intervals, by default 0.3</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.Series</span>
+<span class="sd">        the cleaned IBIs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Artifact detection - Statistical</span>
+    <span class="c1"># for index in trange(data.shape[0]):</span>
+    <span class="c1">#    # Remove RR intervals that differ more than 20% from the previous one</span>
+    <span class="c1">#    if np.abs(data.iloc[index] - data.iloc[index - 1]) &gt; 0.2 * data.iloc[index]:</span>
+    <span class="c1">#        data.iloc[index] = np.nan</span>
+
+    <span class="c1"># efficiency instead of loop ;-)</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">data</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[(</span><span class="n">data</span> <span class="o">&lt;</span> <span class="mi">250</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">data</span> <span class="o">&gt;</span> <span class="mi">2000</span><span class="p">)],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># drop by bpm &gt; 240 or bpm &lt; 30</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># just to be sure</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">__generate_features_for_domain</span><span class="p">(</span><span class="n">clean_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_cores_used</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                   <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">trange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clean_data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">features</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">num_cores_used</span><span class="p">)(</span><span class="n">delayed</span><span class="p">(</span><span class="n">__calculate_hrv_features</span><span class="p">)</span>
+                                               <span class="p">(</span><span class="n">clean_data</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">epoch_width</span><span class="o">=</span><span class="n">epoch_width</span><span class="p">,</span>
+                                                <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+                                                <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
+                                               <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">)</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">features</span><span class="p">)))</span>
+    <span class="n">features</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">features</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">features</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">features</span>
+
+
+<span class="k">def</span> <span class="nf">__calculate_hrv_features</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">epoch_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="c1"># first check if there is at least one IBI in the epoch</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">epoch_width</span><span class="p">:</span>
+        <span class="n">min_timestamp</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">max_timestamp</span> <span class="o">=</span> <span class="n">min_timestamp</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">epoch_width</span><span class="p">)</span>
+        <span class="n">relevant_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">min_timestamp</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">max_timestamp</span><span class="p">)]</span>
+
+        <span class="n">expected_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">epoch_width</span> <span class="o">/</span> <span class="p">(</span><span class="n">relevant_data</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="n">actual_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">relevant_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">actual_length</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">expected_length</span> <span class="o">*</span> <span class="n">threshold</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">domain</span> <span class="o">==</span> <span class="s1">&#39;td&#39;</span><span class="p">:</span>
+                <span class="n">domain_features</span> <span class="o">=</span> <span class="n">hrvanalysis</span><span class="o">.</span><span class="n">get_time_domain_features</span><span class="p">(</span><span class="n">relevant_data</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">domain</span> <span class="o">==</span> <span class="s1">&#39;fd&#39;</span><span class="p">:</span>
+                <span class="n">domain_features</span> <span class="o">=</span> <span class="n">hrvanalysis</span><span class="o">.</span><span class="n">get_frequency_domain_features</span><span class="p">(</span><span class="n">relevant_data</span><span class="p">,</span> <span class="n">sampling_frequency</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                                            <span class="n">method</span><span class="o">=</span><span class="s1">&#39;lomb&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">domain</span> <span class="o">==</span> <span class="s1">&#39;nl&#39;</span><span class="p">:</span>
+                <span class="n">domain_features</span> <span class="o">=</span> <span class="n">get_nl_features</span><span class="p">(</span><span class="n">relevant_data</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">domain_features</span> <span class="o">=</span> <span class="n">get_stats</span><span class="p">(</span><span class="n">relevant_data</span><span class="p">,</span> <span class="s1">&#39;ibi&#39;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="n">min_timestamp</span><span class="p">,</span> <span class="o">**</span><span class="n">domain_features</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, The FLIRT development team
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

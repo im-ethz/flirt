@@ -1,5 +1,6 @@
-API Reference
-=============
+Functions
+==========
+
 
 
 ACC
@@ -40,12 +41,6 @@ Reader
 .. automodule:: flirt.reader.holter
    :members:
 
-
-Simple
-------
-
-.. automodule:: flirt.simple
-   :members:
 
 Stats
 -------

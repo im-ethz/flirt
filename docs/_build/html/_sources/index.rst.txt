@@ -14,8 +14,7 @@ Welcome to **FLIRT**'s documentation.
    :maxdepth: 2
    :caption: Contents
    
-   api
-   theory/index
+   functions
 
 
 Indices and tables
