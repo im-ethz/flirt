@@ -6,7 +6,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
-from ..stats.common import get_stats
+from ..stats.common import __get_stats
 
 
 def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: int = 1, data_frequency: int = 32,
@@ -30,7 +30,7 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
     Returns
     -------
     ACC Features: pd.DataFrame
-        A DataFrame containing statistical aggregation features.
+        A DataFrame containing all ststistical features.
 
     Notes
     -----
@@ -42,9 +42,7 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
 
     Examples
     --------
-    >>> import flirt.reader.empatica
-    >>> acc = flirt.reader.empatica.read_acc_file_into_df("ACC.csv")
-    >>> acc_features = flirt.get_acc_features(acc, 60)
+    >>> acc_features = flirt.acc.get_acc_features(acc, 60)
     """
 
     if not num_cores >= 1:
@@ -54,7 +52,7 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
     input_data['l2'] = np.linalg.norm(data.to_numpy(), axis=1)
 
     inputs = trange(0, len(input_data) - 1,
-                    window_step_size * data_frequency, desc="ACC features")  # advance by window_step_size * data_frequency
+                    window_step_size * data_frequency)  # advance by window_step_size * data_frequency
 
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(

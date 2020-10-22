@@ -24,9 +24,6 @@ except:
 
 
 class StatFeatures(DomainFeatures):
-    def __get_type__(self) -> str:
-        return "Statistical"
-
     def __generate__(self, data: np.array) -> dict:
         return get_stats(data, 'hrv')
 
@@ -56,8 +53,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     domains : List[str]
         domains to calculate (possible values: "td", "fd", "nl", "stat")
     threshold : float
-        the relative portion of IBIs that need to be present in a window for processing. \
-        Otherwise, the window is dropped
+        the relative portion of IBIs that need to be present in a window for processing. Otherwise, the window is dropped
     clean_data : bool, optional
         whether obviously invalid IBIs should be removed before processing, by default True
     num_cores : int, optional
@@ -67,7 +63,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     -------
     HRV Features: pd.DataFrame
         A DataFrame containing all chosen features (i.e., time domain, frequency domain, non-linear features, \
-        and/or statistical features)
+        and/ or statistical features)
 
     Notes
     -----
@@ -81,24 +77,22 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
         - **Non-Linear Features**: SD1, SD2, SD2SD1, CSI, CVI, CSI_Modified
 
         - **Statistical Features**: ibi_entropy, ibi_perm_entropy, ibi_svd_entropy, ibi_ibi_mean, \
-        ibi_min, ibi_max, ibi_ptp, ibi_sum, ibi_energy, ibi_skewness, ibi_kurtosis, ibi_peaks, ibi_rms, \
-        ibi_lineintegral, ibi_n_above_mean, ibi_n_below_mean, ibi_iqr, ibi_iqr_5_95, ibi_pct_5, ibi_pct_95
+        ibi_min, ibi_max, ibi_ptp, ibi_sum, ibi_energy, ibi_skewness, ibi_kurtosis, ibi_peaks, ibi_rms, ibi_lineintegral, \
+        ibi_n_above_mean, ibi_n_below_mean, ibi_iqr, ibi_iqr_5_95, ibi_pct_5, ibi_pct_95
 
     Examples
     --------
-    >>> import flirt.reader.empatica
-    >>> ibis = flirt.reader.empatica.read_ibi_file_into_df("IBI.csv")
-    >>> hrv_features = flirt.get_hrv_features(ibis['ibi'], 60, 1, ["td", "fd", "stat"], 0.8)
+    >>> hrv_features = flirt.hrv.get_acc_features(ibis, 60, 1, ["td", "fd", "stat"], 0.8)
     """
 
     if not num_cores >= 1:
         num_cores = multiprocessing.cpu_count()
 
     if clean_data:
-        # print("Cleaning data...")
+        print("Cleaning data...")
         clean_data = __clean_artifacts(data.copy())
     else:
-        # print("Not cleaning data")
+        print("Not cleaning data")
         clean_data = data.copy()
 
     calculated_features = {}
@@ -108,7 +102,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
             if domain not in feature_functions.keys():
                 raise ValueError("invalid feature domain: " + domain)
 
-            #print("Calculate %s features" % domain)
+            print("Calculate %s features" % domain)
 
             feat = __generate_features_for_domain(clean_data, window_length, threshold,
                                                   feature_function=feature_functions[domain], parallel=parallel)
@@ -123,7 +117,6 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     features.interpolate(method='time', limit=int((1 - threshold) * (window_length / window_step_size)), inplace=True)
     features = features.reindex(target_index)
-    features.index.name = 'datetime'
 
     return features
 
@@ -162,7 +155,7 @@ def __clean_artifacts(data: pd.Series, threshold=0.2) -> pd.Series:
 
 def __generate_features_for_domain(clean_data: pd.Series, window_length: int, threshold: float,
                                    feature_function: DomainFeatures, parallel: Parallel) -> pd.DataFrame:
-    inputs = trange(len(clean_data) - 1, desc="HRV %s features " % feature_function.__get_type__())
+    inputs = trange(len(clean_data) - 1)
 
     features = parallel(delayed(__calculate_hrv_features)
                         (clean_data, i=k, window_length=window_length,
