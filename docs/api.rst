@@ -20,6 +20,14 @@ EDA
 .. automodule:: flirt.eda
    :members:
 
+
+Preprocessing
+----------------
+
+.. automodule:: flirt.eda.preprocessing
+   :members:
+
+
 Reader
 -------
 

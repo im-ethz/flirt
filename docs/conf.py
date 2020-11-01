@@ -12,7 +12,6 @@
 #
 import os
 import sys
-
 sys.path.insert(0, os.path.abspath('../'))
 
 import re
@@ -23,7 +22,6 @@ master_doc = 'index'
 # -- Project information -----------------------------------------------------
 
 project = 'FLIRT'
-
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -39,12 +37,10 @@ version = find_version()
 # The full version, including alpha/beta/rc tags.
 release = version
 
-
 # General information about the project.
 def find_author():
     result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format("__author__"), open('../flirt/__init__.py').read())
     return str(result.group(1))
-
 
 author = find_author()
 copyright = "2020, " + author
@@ -59,7 +55,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
-    'm2r2'
+    'm2r2',
+    'sphinx.ext.autosectionlabel'
 ]
 
 autodoc_default_options = {
@@ -88,6 +85,7 @@ todo_include_todos = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -110,10 +108,13 @@ html_favicon = 'img/favicon.ico'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'flirtdoc'
+
+
 
 # -- Options for LaTeX output ------------------------------------------
 pdf_title = u'FLIRT'
@@ -148,28 +149,27 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc,
-     'flirt.tex',
-     pdf_title,
-     author_field,
-     'manual'),
+        (master_doc,
+         'flirt.tex',
+         pdf_title,
+         author_field,
+         'manual'),
 ]
+
 
 # Other
 add_module_names = True  # so functions aren’t prepended with the name of the package/module
 add_function_parentheses = True  # to ensure that parentheses are added to the end of all function names
 
 # set up the types of member to check that are documented
-members_to_watch = ['function', ]
-
+members_to_watch = ['function',]
 
 def warn_undocumented_members(app, what, name, obj, options, lines):
     if what in members_to_watch and len(lines) is 0:
         # warn to terminal during build
-        print("Warning: " + what + " is undocumented: " + name)
+        print ("Warning: " + what + " is undocumented: " + name )
         # or modify the docstring so the rendered output is highlights the omission
         lines.append(".. Warning:: %s '%s' is undocumented" % (what, name))
-
 
 def setup(app):
     app.connect('autodoc-process-docstring', warn_undocumented_members)
