@@ -66,7 +66,7 @@ class ComputePeaks(PeakFeatures):
 
         results = {}
         features_names = ['peaks_p', 'rise_time_p', 'max_deriv_p', 'amp_p', 'decay_time_p', 'SCR_width_p', 'auc_p']
-        if len(df) > 0:
+        if len(data) > 0:
             results['peaks_p'] = len(feature_data)
             results['rise_time_p'] = result_df[result_df.peaks != 0.0].rise_time.mean()
             results['max_deriv_p'] = result_df[result_df.peaks != 0.0].max_deriv.mean()
