@@ -3,6 +3,7 @@ from .cvxeda import CvxEda
 from .ekf import ExtendedKalmanFilter
 from .low_pass import LowPassFilter
 from .pipeline import MultiStepPipeline
+from .peak_features import ComputePeaks
 
 __all__ = [
     "CvxEda",
@@ -10,4 +11,5 @@ __all__ = [
     "LowPassFilter",
     "LrDetector",
     "MitExplorerDetector",
+    "ComputePeaks",
 ]
