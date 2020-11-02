@@ -1,4 +1,2 @@
 HRV Analysis
 ============
-
-Coming soon...

@@ -15,6 +15,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../'))
 
 import re
+import sphinx_rtd_theme
 
 # The master toctree document.
 master_doc = 'index'
@@ -92,16 +93,6 @@ html_show_sphinx = False
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-
-html_theme_options = {
-    # 'logo_only': True,
-    'display_version': False,
-    'style_nav_header_background': '#343131',
-}
-
-html_logo = 'img/flirt-white.png'
-
-html_favicon = 'img/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

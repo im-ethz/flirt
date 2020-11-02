@@ -40,7 +40,6 @@ def getInputLoadFile(filepath, sensor: str = 'e4'):
 
     return data, filepath_confirm
 
-
 def getOutputPath():
     print("")
     print("Where would you like to save the computed output file?")
@@ -262,7 +261,6 @@ def butter_lowpass(cutoff, fs, order=5):
     normal_cutoff = cutoff / nyq
     b, a = scisig.butter(order, normal_cutoff, btype='low', analog=False)
     return b, a
-
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
     # Filtering Helper functions
