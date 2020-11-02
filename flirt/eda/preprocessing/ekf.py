@@ -181,7 +181,7 @@ class ExtendedKalmanFilter(Preprocessor):
 
             SC[k,] = x_m[0,] + x_m[2,] + x_m[3,]
 
-        print('- Artifact removal and noise filtering using the EKF completed.')
+        # print('- Artifact removal and noise filtering using the EKF completed.')
 
         # Return SC filtered data as a pd.Series
-        return pd.Series(data=SC[0:eda_len], index=data.index, name='filtered_eda')
+        return pd.Series(data=SC[:eda_len], index=data.index, name='filtered_eda')

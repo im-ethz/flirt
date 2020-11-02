@@ -68,7 +68,6 @@ class CvxEda(SignalDecomposition):
         self.options = options
 
     def __process__(self, data: pd.Series) -> (pd.Series, pd.Series):
-
         # Decompose data into tonic and phasic components
         phasic, tonic = self.__cvx_eda(data.values, 1 / self.sampling_frequency, self.tau0, self.tau1,
                                        self.delta_knot, self.cvx_alpha, self.gamma, self.solver, self.options)
@@ -77,12 +76,12 @@ class CvxEda(SignalDecomposition):
         data_phasic = pd.Series(np.ravel(phasic), data.index)
         data_tonic = pd.Series(np.ravel(tonic), data.index)
 
-        print('- Decomposition into phasic and tonic components completed')
+        #print('- Decomposition into phasic and tonic components completed')
 
         # Check if tonic values are below zero and filter if it is the case
         if np.amin(data_tonic.values) < 0:
-            LP_filter = LowPassFilter(sampling_frequency=4, order=1, cutoff=0.5, filter='butter')
-            filtered_tonic = LP_filter.__process__(data_tonic)
+            lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_frequency, order=1, cutoff=0.5, filter='butter')
+            filtered_tonic = lowpass_filter.__process__(data_tonic)
             data_tonic = filtered_tonic
 
         return data_phasic, data_tonic

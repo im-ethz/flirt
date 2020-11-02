@@ -30,16 +30,6 @@ class EmpaticaAccTestCase(unittest.TestCase):
         self.assertEqual(313, len(acc))
 
 
-class EmpaticaTSFeatureTestCase(unittest.TestCase):
-    def test_load_data(self):
-        ts = flirt.reader.empatica.read_acc_file_into_df('wearable-data/empatica/ACC.csv')
-        ts = flirt.get_stat_features(ts)
-
-        # print(ts.head())
-
-        self.assertEqual(313, len(ts))
-
-
 class EmpaticaIbiTestCase(unittest.TestCase):
     def test_load_data(self):
         ibi = flirt.reader.empatica.read_ibi_file_into_df('wearable-data/empatica/IBI.csv')

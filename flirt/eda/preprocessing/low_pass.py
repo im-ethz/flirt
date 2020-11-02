@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from scipy.signal import iirfilter, lfilter
 
-import flirt.reader.empatica
 from .data_utils import Preprocessor
 
 
@@ -39,27 +38,29 @@ class LowPassFilter(Preprocessor):
 
     Examples
     --------
+    >>> import flirt.reader.empatica
+    >>> import flirt.eda.preprocessing
     >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
-    >>> eda_filtered_low_pass = flirt.preprocessing.filtering.low_pass_filtering(data:=eda, sampling_frequency=4, 1, 0.1, 'butter')
+    >>> eda_filtered_low_pass = flirt.eda.preprocessing.LowPassFilter(sampling_frequency=4, order=1, cutoff=0.1, \
+        filter='butter').__process__(eda['eda'])
     
     References
     ----------
     - https://docs.scipy.org/doc/scipy/reference/signal.html
     """
 
-    def __init__(self, sampling_frequency: int=4, order: int=1, cutoff: float=0.1, 
-                filter: str='butter', rp: int=1, rs: int=5):
-
+    def __init__(self, sampling_frequency: int = 4, order: int = 1, cutoff: float = 0.1,
+                 filter: str = 'butter', rp: int = 1, rs: int = 5):
         self.sampling_frequency = sampling_frequency
         self.order = order
         self.cutoff = cutoff
         self.filter = filter
         self.rp = rp
         self.rs = rs
-    
+
     def __process__(self, data: pd.Series) -> pd.Series:
         # Load EDA data
-        #Use loaded data eg from flirt.reader.empatica.read_eda_file_into_df(filename)
+        # Use loaded data eg from flirt.reader.empatica.read_eda_file_into_df(filename)
         eda = data
         datetime = eda.index
         eda_len = len(eda)
@@ -70,26 +71,22 @@ class LowPassFilter(Preprocessor):
         # Filter requirements. 
         # EDAexplorer paper of MIT Media Lab Affective Computing Group they use butterworth filter w/ cutoff:1hz, fs:8hz, order:6
         # Detection of Artifacts in Ambulatory Electrodermal Activity Data paper uses cut-off of 0.6Hz for butterworth
-        order = self.order       # order of filter (!!!! NEED TO FIND CORRECT ORDER USING FUNCTIONS PROVIDED!!!!)
-        fs = self.sampling_frequency       # sample rate, Hz
-        cutoff = self.cutoff # desired cutoff frequency of the filter, Hz (found from code above: spectral analysis)
-        filter = self.filter
+        # order = self.order  # order of filter (!!!! NEED TO FIND CORRECT ORDER USING FUNCTIONS PROVIDED!!!!)
+        # fs = self.sampling_frequency  # sample rate, Hz
+        # cutoff = self.cutoff  # desired cutoff frequency of the filter, Hz (found from code above: spectral analysis)
 
         # Filter the data, and plot both the original and filtered signals.
         # rp: For Chebyshev and elliptic filters, provides the maximum ripple in the passband. (dB)
         # rs: For Chebyshev and elliptic filters, provides the minimum attenuation in the stop band. (dB)
-        rp = self.rp # NB. higher rp means smoother filtered data
-        rs = self.rs
-        nyq = 0.5 * fs
-        normal_cutoff = cutoff / nyq
+        normal_cutoff = self.cutoff / (0.5 * self.sampling_frequency)
 
         # a,b filtering
-        b, a = iirfilter(order, normal_cutoff, rp = rp, rs = rs, btype='lowpass', analog=False, ftype = filter, fs=fs, output = 'ba')
+        b, a = iirfilter(self.order, normal_cutoff, rp=self.rp, rs=self.rs, btype='lowpass', analog=False,
+                         ftype=self.filter, fs=self.sampling_frequency, output='ba')
         eda_filtered = lfilter(b, a, eda)
-        
+
         # Creating dataframe
-        self.eda_filtered_dataframe = pd.Series(eda_filtered[0:eda_len], datetime[0:eda_len])
+        eda_filtered_dataframe = pd.Series(eda_filtered[:eda_len], index=datetime[:eda_len])
 
-        print ('- Noise filtering using a low-pass filter completed.')
-
-        return self.eda_filtered_dataframe
+        # print('- Noise filtering using a low-pass filter completed.')
+        return eda_filtered_dataframe

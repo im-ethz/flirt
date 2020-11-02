@@ -563,7 +563,8 @@ def multiclass_classifier():
             'gamma': gamma,
             'num_support_vec': num_support_vec}
 
-
+### TODO: DELETE BELOW
+'''
 if __name__ == '__main__':
 
     binary_test_data = np.array([
@@ -596,6 +597,6 @@ if __name__ == '__main__':
     clf = pickle.loads(s2)
 
     assert (len([1 for i in range(5) if multi_predictions[i] != clf.predict(test_data)[i]]) == 0)
-
+'''
 
 

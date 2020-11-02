@@ -1,10 +1,10 @@
 import pickle
+import os
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
 
-from flirt.eda.models import FeatureMatrix_boschiot
+from flirt.eda.models import custom_featurematrix
 from flirt.eda.models.eda_explorer.EDA_Artifact_Detection_Script import eda_explorer_artifact
 from .data_utils import ArtefactsDetection
 
@@ -44,18 +44,20 @@ class LrDetector(ArtefactsDetection):
 
     def __process__(self, data: pd.Series) -> pd.Series:
         # Calculate features
-        nSubjects_IOT = 1  # Number of time segments in AWW resting dataset
-        # Load the data and construct the feature matrix
-        data_IOT = dict()
-        IOTAll = dict()
-        IOTEda = dict()
+        # nSubjects_IOT = 1  # Number of time segments in AWW resting dataset
+        # # Load the data and construct the feature matrix
+        # data_IOT = dict()
+        # IOTAll = dict()
+        # IOTEda = dict()
+        #
+        # for i in range(nSubjects_IOT):
+        #     data_IOT[i] = data
+        #     IOTAll[i], IOTEda[i] = custom_featurematrix.feature_matrix(data_IOT[i])
+        #
+        # # Convert the dictionary to arrays
+        # eda_features = np.concatenate([IOTEda[x] for x in range(1)], 0)
 
-        for i in range(nSubjects_IOT):
-            data_IOT[i] = data
-            IOTAll[i], IOTEda[i] = FeatureMatrix_boschiot.featureMatrix(data_IOT[i])
-
-        # Convert the dictionary to arrays  
-        IOTEda_features = np.concatenate([IOTEda[x] for x in range(1)], 0)
+        _, eda_features = custom_featurematrix.feature_matrix(data)
 
         # Retrieve data from pandas dataframe
         eda = data
@@ -63,35 +65,32 @@ class LrDetector(ArtefactsDetection):
         datetime = eda.index
         eda = np.array(eda).reshape(eda_len)
         fs = self.sampling_frequency
-        t = np.linspace(0, eda_len / fs, eda_len, endpoint=False)
 
-        pkl_filename = "./flirt/eda/models/LR_trained_model.pkl"
+        # Load model from file
+        model_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '../models/LR_trained_model.pkl'))
+        with open(model_path, 'rb') as file:
+            lr_saved_model = pickle.load(file)
 
-        # Load from file
-        with open(pkl_filename, 'rb') as file:
-            LR_saved_model = pickle.load(file)
-
-        LRIotPredEda = LR_saved_model.predict_proba(IOTEda_features)[:, 1]
-        LRIotPredEda_labels = np.round(LRIotPredEda)
+        predicted_probs = lr_saved_model.predict_proba(eda_features)[:, 1]
+        predicted_labels = np.round(predicted_probs)
 
         # Interpolation in seconds
         scale = 1.0
         window = 5
-        
-        for i in range(0, len(LRIotPredEda_labels) - 1):
-            if (LRIotPredEda_labels[i] == 1.0) and i > 0:
-                start = int(i*fs*window)
-                end = int(start+fs*window)
+
+        for i in range(0, len(predicted_labels) - 1):
+            if (predicted_labels[i] == 1.0) and i > 0:
+                start = int(i * fs * window)
+                end = int(start + fs * window)
                 eda[start:end] = np.nan
-    
 
         # Creating dataframe
-        self.artifact_free_eda = pd.Series(eda[0:eda_len], datetime[0:eda_len])
-        self.artifact_free_eda = self.artifact_free_eda.interpolate(method='linear')
+        artifact_free_eda = pd.Series(eda[:eda_len], index=datetime[:eda_len])
+        artifact_free_eda = artifact_free_eda.interpolate(method='time')
 
-        print('- Artifaction detection and removal using logistic regression completed')
+        # print('- Artifaction detection and removal using logistic regression completed')
 
-        return self.artifact_free_eda
+        return artifact_free_eda
 
 
 class MitExplorerDetector(ArtefactsDetection):
@@ -153,15 +152,14 @@ class MitExplorerDetector(ArtefactsDetection):
 
         for i in range(0, len(labels) - 1):
             if (labels_multi[i] == -1 or labels_binary[i] == -1) and i > 0:
-                start = int(i*fs*window)
-                end = int(start+fs*window)
-                eda[start:end] = np.nan
+                start = int(i * fs * window)
+                end = int(start + fs * window)
+                eda.loc[start:end] = np.nan
 
         # Creating dataframe
-        self.artifact_free_eda = pd.Series(eda[0:eda_len], datetime[0:eda_len])
-        self.artifact_free_eda = self.artifact_free_eda.interpolate(method='linear')
+        artifact_free_eda = pd.Series(eda[:eda_len], index=datetime[:eda_len])
+        artifact_free_eda = artifact_free_eda.interpolate(method='linear')
 
-        print('- Artifaction detection and removal using SVM completed')
+        # print('- Artifaction detection and removal using SVM completed')
 
-        return self.artifact_free_eda
-
+        return artifact_free_eda

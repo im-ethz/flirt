@@ -1,8 +1,9 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
-def __compute_peaks_features(df, sampling_frequency: int=4, offset: int=1, start_WT: int=3, end_WT: int=10, thres: float=0.01):
+def __compute_peaks_features(df, sampling_frequency: int = 4, offset: int = 1, start_WT: int = 3, end_WT: int = 10,
+                             thres: float = 0.01):
     """
     This function computes the peaks features for the relevant phasic data in the EDA signal. 
 
@@ -27,11 +28,6 @@ def __compute_peaks_features(df, sampling_frequency: int=4, offset: int=1, start
         dictionary containing the peak features computed on the phasic component of the EDA data (peaks_p: number of peaks, rise_time_p: average rise time of the peaks, \
         max_deriv_p: average value of the maximum derivative, amp_p: average amplitute of the peaks, decay_time_p: average decay time of the peaks, SCR_width_p: average width of the peak (SCR), \
         auc_p: average area under the peak)
-
-    Examples
-    --------
-    >>> relevant_data = data['phasic']
-    >>> eda_filtered_ekf = flirt.stats.peak_features.__compute_peaks_features(df=relevant_data, sampling_frequency=4)
     
     References
     -----------
@@ -39,47 +35,48 @@ def __compute_peaks_features(df, sampling_frequency: int=4, offset: int=1, start
     - https://github.com/MITMediaLabAffectiveComputing/eda-explorer
     """
 
-
-    returnedPeakData = __findPeaks(df, offset*sampling_frequency, start_WT, end_WT, thres, sampling_frequency)
-    result_df = pd.DataFrame(columns=["peaks","amp","max_deriv","rise_time","decay_time","SCR_width"])
-    result_df['peaks'] = returnedPeakData[0]
-    result_df['amp'] = returnedPeakData[5]
-    result_df['max_deriv'] = returnedPeakData[6]
-    result_df['rise_time'] = returnedPeakData[7]
-    result_df['decay_time'] = returnedPeakData[8]
-    result_df['SCR_width'] = returnedPeakData[9]
+    returned_peak_data = __find_peaks(df, offset * sampling_frequency, start_WT, end_WT, thres, sampling_frequency)
+    result_df = pd.DataFrame(columns=["peaks", "amp", "max_deriv", "rise_time", "decay_time", "SCR_width"])
+    result_df['peaks'] = returned_peak_data[0]
+    result_df['amp'] = returned_peak_data[5]
+    result_df['max_deriv'] = returned_peak_data[6]
+    result_df['rise_time'] = returned_peak_data[7]
+    result_df['decay_time'] = returned_peak_data[8]
+    result_df['SCR_width'] = returned_peak_data[9]
 
     # To keep all filtered data remove this line
-    featureData = result_df[result_df.peaks==1][['peaks','rise_time','max_deriv','amp','decay_time','SCR_width']]
-    
+    feature_data = result_df[result_df.peaks == 1][
+        ['peaks', 'rise_time', 'max_deriv', 'amp', 'decay_time', 'SCR_width']]
+
     # Replace 0s with NaN, this is where the 50% of the peak was not found, too close to the next peak
-    #featureData[['SCR_width','decay_time']]=featureData[['SCR_width','decay_time']].replace(0, np.nan)
-    featureData['AUC']=featureData['amp']*featureData['SCR_width']
+    # feature_data[['SCR_width','decay_time']]=feature_data[['SCR_width','decay_time']].replace(0, np.nan)
+    feature_data['AUC'] = feature_data['amp'] * feature_data['SCR_width']
 
     results = {}
     features_names = ['peaks_p', 'rise_time_p', 'max_deriv_p', 'amp_p', 'decay_time_p', 'SCR_width_p', 'auc_p']
     if len(df) > 0:
-        results['peaks_p'] = len(featureData)
+        results['peaks_p'] = len(feature_data)
         results['rise_time_p'] = result_df[result_df.peaks != 0.0].rise_time.mean()
         results['max_deriv_p'] = result_df[result_df.peaks != 0.0].max_deriv.mean()
         results['amp_p'] = result_df[result_df.peaks != 0.0].amp.mean()
-        results['decay_time_p'] = featureData[featureData.peaks != 0.0].decay_time.mean()
-        results['SCR_width_p'] = featureData[featureData.peaks != 0.0].SCR_width.mean()
-        results['auc_p'] = featureData[featureData.peaks != 0.0].AUC.mean()
+        results['decay_time_p'] = feature_data[feature_data.peaks != 0.0].decay_time.mean()
+        results['SCR_width_p'] = feature_data[feature_data.peaks != 0.0].SCR_width.mean()
+        results['auc_p'] = feature_data[feature_data.peaks != 0.0].AUC.mean()
         for key in features_names:
             if np.isnan(results[key]):
-                results[key]=0.0
+                results[key] = 0.0
     else:
         for key in features_names:
             results[key] = np.nan
 
     return results
 
-def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: float=0.01, sampleRate: int=4):
-    '''
+
+def __find_peaks(data, offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01, sample_rate: int = 4):
+    """
         This function finds the peaks of an EDA signal and returns basic properties.
         Also, peak_end is assumed to be no later than the start of the next peak.
-        
+
         ********* INPUTS **********
         data:        DataFrame with EDA as one of the columns and indexed by a datetimeIndex
         offset:      the number of rising samples and falling samples after a peak needed to be counted as a peak
@@ -87,7 +84,6 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
         end_WT:      maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
         thres:       the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
         sampleRate:  number of samples per second, default=8
-        
         ********* OUTPUTS **********
         peaks:               list of binary, 1 if apex of SCR
         peak_start:          list of binary, 1 if start of SCR
@@ -96,12 +92,12 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
         peak_end_times:      list of strings, if this index is the apex of an SCR, it contains datetime of rec.t/2
         amplitude:           list of floats,  value of EDA at apex - value of EDA at start
         max_deriv:           list of floats, max derivative within 1 second of apex of SCR
-    '''
-    
-    EDA_deriv = data[1:].values - data[:-1].values
-    peaks = np.zeros(len(EDA_deriv))
-    peak_sign = np.sign(EDA_deriv)
-    for i in range(int(offset), int(len(EDA_deriv) - offset)):
+    """
+
+    eda_deriv = data[1:].values - data[:-1].values
+    peaks = np.zeros(len(eda_deriv))
+    peak_sign = np.sign(eda_deriv)
+    for i in range(int(offset), int(len(eda_deriv) - offset)):
         if peak_sign[i] == 1 and peak_sign[i + 1] < 1:
             peaks[i] = 1
             for j in range(1, int(offset)):
@@ -110,22 +106,22 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
                     break
 
     # Finding start of peaks
-    peak_start = np.zeros(len(EDA_deriv))
+    peak_start = np.zeros(len(eda_deriv))
     peak_start_times = [''] * len(data)
     max_deriv = np.zeros(len(data))
     rise_time = np.zeros(len(data))
 
     for i in range(0, len(peaks)):
         if peaks[i] == 1:
-            temp_start = max(0, i - sampleRate)
-            max_deriv[i] = max(EDA_deriv[temp_start:i])
+            temp_start = max(0, i - sample_rate)
+            max_deriv[i] = max(eda_deriv[temp_start:i])
             start_deriv = .01 * max_deriv[i]
 
             found = False
             find_start = i
             # has to peak within start_WT seconds
-            while found == False and find_start > (i - start_WT * sampleRate):
-                if EDA_deriv[find_start] < start_deriv:
+            while not found and find_start > (i - start_WT * sample_rate):
+                if eda_deriv[find_start] < start_deriv:
                     found = True
                     peak_start[find_start] = 1
                     peak_start_times[i] = data.index[find_start]
@@ -133,10 +129,10 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
 
                 find_start = find_start - 1
 
-        # If we didn't find a start
-            if found == False:
-                peak_start[i - start_WT * sampleRate] = 1
-                peak_start_times[i] = data.index[i - start_WT * sampleRate]
+            # If we didn't find a start
+            if not found:
+                peak_start[i - start_WT * sample_rate] = 1
+                peak_start_times[i] = data.index[i - start_WT * sample_rate]
                 rise_time[i] = start_WT
 
             # Check if amplitude is too small
@@ -153,7 +149,7 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
     amplitude = np.zeros(len(data))
     decay_time = np.zeros(len(data))
     half_rise = [''] * len(data)
-    SCR_width = np.zeros(len(data))
+    scr_width = np.zeros(len(data))
 
     for i in range(0, len(peaks)):
         if peaks[i] == 1:
@@ -166,7 +162,7 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
             found = False
             find_end = i
             # has to decay within end_WT seconds
-            while found == False and find_end < (i + end_WT * sampleRate) and find_end < len(peaks):
+            while found == False and find_end < (i + end_WT * sample_rate) and find_end < len(peaks):
                 if data.iloc[find_end] < half_amp:
                     found = True
                     peak_end[find_end] = 1
@@ -176,11 +172,12 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
                     # Find width
                     find_rise = i
                     found_rise = False
-                    while found_rise == False:
+                    while not found_rise:
                         if data.iloc[find_rise] < half_amp:
                             found_rise = True
                             half_rise[i] = data.index[find_rise]
-                            SCR_width[i] = __get_seconds_and_microseconds(pd.to_datetime(peak_end_times[i]) - data.index[find_rise])
+                            scr_width[i] = __get_seconds_and_microseconds(
+                                pd.to_datetime(peak_end_times[i]) - data.index[find_rise])
                         find_rise = find_rise - 1
 
                 elif peak_start[find_end] == 1:
@@ -190,16 +187,16 @@ def __findPeaks(data, offset: int=1, start_WT: int=3, end_WT: int=10, thres: flo
                 find_end = find_end + 1
 
             # If we didn't find an end
-            if found == False:
-                min_index = np.argmin(data.iloc[i:(i + end_WT * sampleRate)].tolist())
+            if not found:
+                min_index = np.argmin(data.iloc[i:(i + end_WT * sample_rate)].tolist())
                 peak_end[i + min_index] = 1
                 peak_end_times[i] = data.index[i + min_index]
 
     peaks = np.concatenate((peaks, np.array([0])))
     peak_start = np.concatenate((peak_start, np.array([0])))
-    max_deriv = max_deriv * sampleRate  # now in change in amplitude over change in time form (uS/second)
+    max_deriv = max_deriv * sample_rate  # now in change in amplitude over change in time form (uS/second)
 
-    return peaks, peak_start, peak_start_times, peak_end, peak_end_times, amplitude, max_deriv, rise_time, decay_time, SCR_width, half_rise
+    return peaks, peak_start, peak_start_times, peak_end, peak_end_times, amplitude, max_deriv, rise_time, decay_time, scr_width, half_rise
 
 
 def __get_seconds_and_microseconds(pandas_time):

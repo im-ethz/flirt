@@ -12,9 +12,9 @@ from ..stats.common import get_stats
 
 
 def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1,
-                 offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01, num_cores=0,
-                 preprocessor: data_utils.Preprocessor = LowPassFilter(),
-                 signal_decomposition: data_utils.SignalDecomposition = CvxEda()):
+                     offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01, num_cores=0,
+                     preprocessor: data_utils.Preprocessor = LowPassFilter(),
+                     signal_decomposition: data_utils.SignalDecomposition = CvxEda()):
     """
     This function computes several statistical and entropy-based features for the phasic and tonic components of the EDA signal.
 
@@ -40,6 +40,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
         number of cores to use for parallel processing, by default use all available
     preprocessor: class, optional
         the method chosen to clean the data: low-pass filtering or Kalman filtering or artifact-detection with low-pass filtering
+    signal_decomposition: class, optional
+        the method chosen to decompose the data (default: CvxEda)
 
     Returns
     -------
@@ -68,35 +70,35 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     if not num_cores >= 1:
         num_cores = multiprocessing.cpu_count()
 
-    # use only every fourth value
-    inputs = trange(0, len(data) - 1, window_step_size * data_frequency)
-
     # Filter Data
     filtered_dataframe = preprocessor.__process__(data)
 
     # Decompose Data
     phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe)
 
+    # advance by window_step_size * data_frequency
+    inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
+
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(delayed(__get_features_per_window)(phasic_data, tonic_data, window_length=window_length,
                                                               i=k, sampling_frequency=data_frequency, offset=offset,
-                                                              start_WT=start_WT, end_WT=end_WT, thres=thres) for k in inputs)
+                                                              start_WT=start_WT, end_WT=end_WT, thres=thres) for k in
+                           inputs)
 
     # results = pd.DataFrame(list(filter(None, results)))
     results = pd.DataFrame(list(results))
     results.set_index('datetime', inplace=True)
     results.sort_index(inplace=True)
 
-    print('- Feature generation completed')
+    # print('- Feature generation completed')
 
     return results
 
 
-def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, window_length: int, i: int, sampling_frequency: int = 4,
+def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, window_length: int, i: int,
+                              sampling_frequency: int = 4,
                               offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01):
-    
-
     if pd.Timedelta(phasic_data.index[i + 1] - phasic_data.index[i]).total_seconds() <= window_length:
         min_timestamp = phasic_data.index[i]
         max_timestamp = min_timestamp + timedelta(seconds=window_length)
@@ -104,13 +106,16 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
         results = {
             'datetime': max_timestamp,
         }
-        
+
         try:
-            relevant_data_phasic = phasic_data.loc[(phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
+            relevant_data_phasic = phasic_data.loc[
+                (phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
-            results.update( __compute_peaks_features(relevant_data_phasic, sampling_frequency, offset, start_WT, end_WT, thres))
-            
-            relevant_data_tonic = tonic_data.loc[(tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
+            results.update(
+                __compute_peaks_features(relevant_data_phasic, sampling_frequency, offset, start_WT, end_WT, thres))
+
+            relevant_data_tonic = tonic_data.loc[
+                (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
 
         except Exception as e:
