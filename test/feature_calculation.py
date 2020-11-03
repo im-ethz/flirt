@@ -12,25 +12,27 @@ from flirt.eda.preprocessing.data_utils import Preprocessor, ArtefactsDetection
 from flirt.eda.preprocessing.ekf import ExtendedKalmanFilter
 from flirt.eda.preprocessing.artefacts import MitExplorerDetector, LrDetector
 from flirt.eda.preprocessing.pipeline import MultiStepPipeline
+#from flirt.eda.preprocessing.peak_features import ComputePeaks
 
 class EmpaticaEdaTestCase(unittest.TestCase):
     def test_load_data(self):
         ### Load Data
-        filepath = 'wearable-data/empatica'
-        eda = flirt.reader.empatica.read_eda_file_into_df('wearable-data/empatica/EDA.csv')
+        filepath = '/home/fefespinola/ETHZ_Fall_2020/flirt-2/test/wearable-data/empatica'
+        eda = flirt.reader.empatica.read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/flirt-2/test/wearable-data/empatica/EDA.csv')
         
         ### Compute features based on different pre-processing techniques
         # Default (low-pass filter->cvx->features)
-        eda_features_lr = flirt.eda.feature_calculation.get_features(data=eda)
+        eda_features_lpf = flirt.eda.feature_calculation.get_eda_features(data=eda)
+        print('DONE', eda_features_lpf)
 
         # Using EDAexplorer Artifact Detection (svm->interpolation->low-pass filter->cvx->features)
-        eda_features_svm = flirt.eda.feature_calculation.get_features(data=eda, window_length = 60, window_step_size = 1, preprocessor=MultiStepPipeline(MitExplorerDetector(filepath)), num_cores=2)
+        #eda_features_svm = flirt.eda.feature_calculation.get_eda_features(data=eda, window_length = 60, window_step_size = 1,  num_cores=2, preprocessor=MultiStepPipeline(MitExplorerDetector(filepath)), scr_features=ComputePeak(offset = 3))
         
         # Using Media Lab UT Artifact Detection (lr->interpolation->low-pass filter->cvx->features)
-        eda_features_lr = flirt.eda.feature_calculation.get_features(data=eda, window_length = 60, window_step_size = 1, preprocessor=MultiStepPipeline(LrDetector()), num_cores=2)
+        #eda_features_lr = flirt.eda.feature_calculation.get_features(data=eda, window_length = 60, window_step_size = 1, preprocessor=MultiStepPipeline(LrDetector()), num_cores=2)
         
         # Using Extended Kalman Filter (ekf->cvx->features)
-        eda_features_ekf = flirt.eda.feature_calculation.get_features(data=eda, window_length = 60, window_step_size = 1, preprocessor=ExtendedKalmanFilter(), num_cores=2)
+        #eda_features_ekf = flirt.eda.feature_calculation.get_features(data=eda, window_length = 60, window_step_size = 1, preprocessor=ExtendedKalmanFilter(), num_cores=2)
 
         # print(eda.head())
 

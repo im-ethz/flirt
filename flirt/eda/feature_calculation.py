@@ -79,8 +79,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe)
 
     # advance by window_step_size * data_frequency
-    inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
-
+    inputs = range(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
+    print(scr_features)
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(delayed(__get_features_per_window)(phasic_data, tonic_data, window_length=window_length,
@@ -118,7 +118,7 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
             relevant_data_tonic = tonic_data.loc[
                 (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
-
+    
         except Exception as e:
             pass
 
