@@ -18,12 +18,12 @@ class EmpaticaEdaTestCase(unittest.TestCase):
         eda = flirt.reader.empatica.read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica/EDA.csv')
         self.assertEqual(10000, len(eda))
 
-    '''
+    
     def test_get_features(self):
         eda = flirt.reader.empatica.read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica/EDA.csv')
         eda_features = flirt.get_eda_features(data=eda['eda'])
         self.assertEqual(2500, len(eda_features))
-    '''
+    
 
     def test_eda_explorer(self):
         filepath = '/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica'

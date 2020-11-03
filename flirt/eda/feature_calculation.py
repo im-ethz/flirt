@@ -6,9 +6,17 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/home/fefespinola/ETHZ_Fall_2020/flirt-1')
+
 import flirt
-from flirt.eda.preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks
-from ..stats.common import get_stats
+from flirt.eda.preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab
+from flirt.stats.common import get_stats
+from flirt.reader.empatica import read_eda_file_into_df
+from flirt.eda.preprocessing.ekf import ExtendedKalmanFilter
+from flirt.eda.preprocessing.artefacts import MitExplorerDetector, LrDetector
+from flirt.eda.preprocessing.pipeline import MultiStepPipeline
 
 
 def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1, num_cores=0,
@@ -35,7 +43,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     signal_decomposition: class, optional
         the method chosen to decompose the data (default: CvxEda)
     scr_features: class, optional
-        computes peak features of the Skin Conductance response data using EDA Explorer algorithm
+        computes peak features of the Skin Conductance response data using the algorithm from MIT Media Lab
 
     Returns
     -------
@@ -90,7 +98,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
 
 def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, window_length: int, i: int,
                               sampling_frequency: int = 4,
-                              offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01):
+                               __compute_peak_features: data_utils.PeakFeatures = ComputePeaks()):
+
     if pd.Timedelta(phasic_data.index[i + 1] - phasic_data.index[i]).total_seconds() <= window_length:
         min_timestamp = phasic_data.index[i]
         max_timestamp = min_timestamp + timedelta(seconds=window_length)
@@ -104,7 +113,7 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
                 (phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(
-                __compute_peaks_features.__process__(relevant_data_phasic))
+                __compute_peak_features.__process__(relevant_data_phasic))
 
             relevant_data_tonic = tonic_data.loc[
                 (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
@@ -117,3 +126,12 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
 
     else:
         return None
+
+
+##### TEST ######
+filepath = '/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica'
+eda = read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica/EDA.csv')
+# Using EDAexplorer Artifact Detection (svm->interpolation->low-pass filter->cvx->features)
+eda_features_svm = get_eda_features(data=eda,  num_cores=1, signal_decomposition=LedaLab(), scr_features=ComputePeaks(offset=3))
+#self.assertEqual(2500, len(eda_features_svm))
+print('DONE', eda_features_svm)

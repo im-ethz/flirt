@@ -6,9 +6,9 @@ import numpy as np
 from numpy import array as npa
 from scipy.signal import convolve
 from scipy.signal import deconvolve
-import utils
-import analyse
-import leda2
+from ...models.ledalab import utils
+from ...models.ledalab import analyse
+from ...models.ledalab import leda2
 
 
 def sdeco(nr_iv):

@@ -9,8 +9,8 @@ from scipy import stats
 from scipy.signal import convolve
 from scipy import interpolate
 from scipy.linalg import norm
-import leda2
-import utils
+from ...models.ledalab import leda2
+from ...models.ledalab import utils
 
 
 def cgd(start_val, error_fcn, h, crit_error, crit_iter, crit_h):

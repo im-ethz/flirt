@@ -4,6 +4,7 @@ from .ekf import ExtendedKalmanFilter
 from .low_pass import LowPassFilter
 from .pipeline import MultiStepPipeline
 from .peak_features import ComputePeaks
+from .ledalab import LedaLab
 
 __all__ = [
     "CvxEda",
@@ -12,4 +13,5 @@ __all__ = [
     "LrDetector",
     "MitExplorerDetector",
     "ComputePeaks",
+    "LedaLab",
 ]

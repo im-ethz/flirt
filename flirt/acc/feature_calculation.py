@@ -6,7 +6,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
-from ..stats.common import __get_stats
+from ..stats.common import get_stats
 
 
 def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: int = 1, data_frequency: int = 32,

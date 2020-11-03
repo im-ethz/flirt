@@ -1,0 +1,99 @@
+from __future__ import division
+import numpy as np
+import pandas as pd
+
+from .data_utils import SignalDecomposition
+from .low_pass import LowPassFilter
+from ..models.ledalab import leda2, utils, analyse, deconvolution
+
+class LedaLab(SignalDecomposition):
+    """
+    Decompose Electrodermal Activity (EDA) into Phasic and Tonic components.
+
+    This class decomposes the filtered EDA signal into tonic and phasic components using the Ledalab algorithm, adapted from MATLAB. It also \
+    ensures that the tonic signal never drops below zero.
+    
+    Parameters
+    -----------
+    data : pd.DataFrame
+        raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
+        columns are the raw eda data: `eda` and the filtered data: `filtered_eda`
+    sampling_rate : int, optional
+        the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+    downsample: int, optional
+        downsampling factor to reduce computing time (1 == no downsample)
+    optimisation: int, optional
+        level of optimization (0 == no optimisation)     
+
+    Returns
+    -------
+    pd.DataFrame
+        dataframe with four columns including the raw EDA data, the filtered signal, the phasic and the tonic \
+        components, index is a list of timestamps
+
+    Examples
+    --------
+    >>> import flirt.reader.empatica
+    >>> import flirt.eda
+    >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
+    >>> phasic, tonic = flirt.eda.preprocessing.LedaLab().__process__(eda['eda'])
+    
+    References
+    ----------
+    - Benedek, M. & Kaernbach, C. Decomposition of skin conductance data by means of nonnegative deconvolution. Psychophysiology. 2010
+    - https://github.com/HIIT/Ledapy
+    """
+
+    def __init__(self, sampling_rate: int=4, downsample: int=1, optimisation: int=0):
+
+        self.sampling_rate = sampling_rate
+        self.downsample = downsample
+        self.optimisation = optimisation
+
+    def __process__(self, data: pd.Series) -> (pd.Series, pd.Series):
+        """
+        Run main analysis: extract phasic driver (returned) and set all leda2 values
+
+        """
+        leda2.reset()
+        leda2.current.do_optimize = self.optimisation
+        self.import_data(data)
+        deconvolution.sdeco(self.optimisation)
+        
+        phasic = leda2.analysis.phasicData
+        tonic = leda2.analysis.tonicData
+
+        # Creating dataframe
+        data_phasic = pd.Series(np.ravel(phasic), data.index)
+        data_tonic = pd.Series(np.ravel(tonic), data.index)
+
+        # Check if tonic values are below zero and filter if it is the case
+        if np.amin(data_tonic.values) < 0:
+            lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_frequency, order=1, cutoff=0.5, filter='butter')
+            filtered_tonic = lowpass_filter.__process__(data_tonic)
+            data_tonic = filtered_tonic
+        
+        return data_phasic, data_tonic
+
+    def import_data(self, data):
+        """
+        Sets leda2 object to its appropriate values to allow analysis
+        Adapted from main/import/import_data.m
+        """
+        
+        conductance_data = np.array(data.values, dtype='float64')
+        time_data = utils.genTimeVector(conductance_data, self.sampling_rate)
+
+        if self.downsample > 1:
+            (time_data, conductance_data) = utils.downsamp(time_data, conductance_data, self.downsample, 'mean')
+        leda2.data.samplingrate = self.sampling_rate / self.downsample
+        leda2.data.time_data = time_data
+        leda2.data.conductance_data = conductance_data
+        leda2.data.conductance_error = np.sqrt(np.mean(pow(np.diff(conductance_data), 2)) / 2)
+        leda2.data.N = len(conductance_data)
+        leda2.data.conductance_min = np.min(conductance_data)
+        leda2.data.conductance_max = np.max(conductance_data)
+        leda2.data.conductance_smoothData = conductance_data
+        analyse.trough2peak_analysis()
+
+    

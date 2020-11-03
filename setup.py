@@ -33,7 +33,8 @@ requirements = [
     "tqdm>=4.43",
     "ishneholterlib",
     "numba",
-    "astropy"
+    "astropy", 
+    "sympy"
 ]
 
 extras_require = {

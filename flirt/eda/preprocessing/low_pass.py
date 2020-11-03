@@ -88,5 +88,4 @@ class LowPassFilter(Preprocessor):
         # Creating dataframe
         eda_filtered_dataframe = pd.Series(eda_filtered[:eda_len], index=datetime[:eda_len])
 
-        # print('- Noise filtering using a low-pass filter completed.')
         return eda_filtered_dataframe

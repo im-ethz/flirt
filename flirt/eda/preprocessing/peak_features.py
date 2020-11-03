@@ -47,7 +47,7 @@ class ComputePeaks(PeakFeatures):
 
     def __process__(self, data: pd.Series) -> dict:
 
-        returned_peak_data = __find_peaks(data)
+        returned_peak_data = self.__find_peaks(data)
         result_df = pd.DataFrame(columns=["peaks", "amp", "max_deriv", "rise_time", "decay_time", "SCR_width"])
         result_df['peaks'] = returned_peak_data[0]
         result_df['amp'] = returned_peak_data[5]
@@ -66,7 +66,7 @@ class ComputePeaks(PeakFeatures):
 
         results = {}
         features_names = ['peaks_p', 'rise_time_p', 'max_deriv_p', 'amp_p', 'decay_time_p', 'SCR_width_p', 'auc_p']
-        if len(df) > 0:
+        if len(data) > 0:
             results['peaks_p'] = len(feature_data)
             results['rise_time_p'] = result_df[result_df.peaks != 0.0].rise_time.mean()
             results['max_deriv_p'] = result_df[result_df.peaks != 0.0].max_deriv.mean()
@@ -84,7 +84,7 @@ class ComputePeaks(PeakFeatures):
         return results
 
     def __find_peaks(self, data):
-    """
+        """
         This function finds the peaks of an EDA signal and returns basic properties.
         Also, peak_end is assumed to be no later than the start of the next peak.
 
@@ -104,7 +104,7 @@ class ComputePeaks(PeakFeatures):
         peak_end_times:      list of strings, if this index is the apex of an SCR, it contains datetime of rec.t/2
         amplitude:           list of floats,  value of EDA at apex - value of EDA at start
         max_deriv:           list of floats, max derivative within 1 second of apex of SCR
-    """
+        """
         sample_rate = self.sampling_frequency
         offset = self.offset*self.sampling_frequency
         start_WT = self.start_WT
@@ -142,7 +142,7 @@ class ComputePeaks(PeakFeatures):
                         found = True
                         peak_start[find_start] = 1
                         peak_start_times[i] = data.index[find_start]
-                        rise_time[i] = __get_seconds_and_microseconds(data.index[i] - pd.to_datetime(peak_start_times[i]))
+                        rise_time[i] = self.__get_seconds_and_microseconds(data.index[i] - pd.to_datetime(peak_start_times[i]))
 
                     find_start = find_start - 1
 
@@ -184,7 +184,7 @@ class ComputePeaks(PeakFeatures):
                         found = True
                         peak_end[find_end] = 1
                         peak_end_times[i] = data.index[find_end]
-                        decay_time[i] = __get_seconds_and_microseconds(pd.to_datetime(peak_end_times[i]) - data.index[i])
+                        decay_time[i] = self.__get_seconds_and_microseconds(pd.to_datetime(peak_end_times[i]) - data.index[i])
 
                         # Find width
                         find_rise = i
@@ -193,7 +193,7 @@ class ComputePeaks(PeakFeatures):
                             if data.iloc[find_rise] < half_amp:
                                 found_rise = True
                                 half_rise[i] = data.index[find_rise]
-                                scr_width[i] = __get_seconds_and_microseconds(
+                                scr_width[i] = self.__get_seconds_and_microseconds(
                                     pd.to_datetime(peak_end_times[i]) - data.index[find_rise])
                             find_rise = find_rise - 1
 
