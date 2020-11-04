@@ -4,21 +4,12 @@ from datetime import datetime
 import pandas as pd
 from ishneholterlib import Holter
 
+
 import flirt
 import flirt.reader.empatica
 import flirt.reader.holter
 import flirt.stats
-
-
-class EmpaticaEdaTestCase(unittest.TestCase):
-    def test_load_data(self):
-        eda = flirt.reader.empatica.read_eda_file_into_df('wearable-data/empatica/EDA.csv')
-        eda = flirt.get_eda_features(eda['eda'])
-
-        # print(eda.head())
-
-        self.assertEqual(2500, len(eda))
-
+import flirt.eda.preprocessing as eda_preprocess
 
 class EmpaticaAccTestCase(unittest.TestCase):
     def test_load_data(self):

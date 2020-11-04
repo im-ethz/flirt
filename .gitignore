@@ -90,6 +90,7 @@ ENV/
 .ropeproject
 *.npy
 *.pkl
+!flirt/eda/models/*.pkl
 
 # IDE
 .idea

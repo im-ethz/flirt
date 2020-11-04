@@ -6,15 +6,15 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
-from .peak_features import __compute_peaks_features
-from .preprocessing import data_utils, CvxEda, LowPassFilter
+from .preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab, ExtendedKalmanFilter, MitExplorerDetector, MultiStepPipeline, LrDetector
 from ..stats.common import get_stats
 
 
-def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1,
-                     offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01, num_cores=0,
+
+def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1, num_cores=0,
                      preprocessor: data_utils.Preprocessor = LowPassFilter(),
-                     signal_decomposition: data_utils.SignalDecomposition = CvxEda()):
+                     signal_decomposition: data_utils.SignalDecomposition = CvxEda(),
+                     scr_features: data_utils.PeakFeatures = ComputePeaks()):
     """
     This function computes several statistical and entropy-based features for the phasic and tonic components of the EDA signal.
 
@@ -28,20 +28,14 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
         step-size taken to move the sliding window (in seconds)
     data_frequency : int, optional
         the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
-    offset: int, optional
-        the number of rising samples and falling samples after a peak needed to be counted as a peak
-    start_WT: int, optional
-        maximum number of seconds before the apex of a peak that is the "start" of the peak
-    end_WT: int, optional
-        maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
-    thres: float, optional
-        the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
     num_cores : int, optional
         number of cores to use for parallel processing, by default use all available
     preprocessor: class, optional
         the method chosen to clean the data: low-pass filtering or Kalman filtering or artifact-detection with low-pass filtering
     signal_decomposition: class, optional
         the method chosen to decompose the data (default: CvxEda)
+    scr_features: class, optional
+        computes peak features of the Skin Conductance response data using the algorithm from MIT Media Lab
 
     Returns
     -------
@@ -61,9 +55,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     --------
     >>> import flirt.reader.empatica
     >>> import flirt.eda
-    >>> path = './empatica/1575615731_A12345'
     >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
-    >>> eda_features = flirt.eda.get_features(eda['eda'], data_frequency=4, window_length=60, window_step_size=1)
+    >>> eda_features = flirt.eda.get_eda_features(eda, data_frequency=4, window_length=60, window_step_size=1)
     """
 
     # Get number of cores
@@ -78,27 +71,25 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
 
     # advance by window_step_size * data_frequency
     inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
-
+    
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(delayed(__get_features_per_window)(phasic_data, tonic_data, window_length=window_length,
-                                                              i=k, sampling_frequency=data_frequency, offset=offset,
-                                                              start_WT=start_WT, end_WT=end_WT, thres=thres) for k in
-                           inputs)
+                                                              i=k, sampling_frequency=data_frequency, __compute_peak_features = scr_features) for k in inputs)
 
     # results = pd.DataFrame(list(filter(None, results)))
     results = pd.DataFrame(list(results))
     results.set_index('datetime', inplace=True)
     results.sort_index(inplace=True)
 
-    # print('- Feature generation completed')
 
     return results
 
 
 def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, window_length: int, i: int,
                               sampling_frequency: int = 4,
-                              offset: int = 1, start_WT: int = 3, end_WT: int = 10, thres: float = 0.01):
+                               __compute_peak_features: data_utils.PeakFeatures = ComputePeaks()):
+
     if pd.Timedelta(phasic_data.index[i + 1] - phasic_data.index[i]).total_seconds() <= window_length:
         min_timestamp = phasic_data.index[i]
         max_timestamp = min_timestamp + timedelta(seconds=window_length)
@@ -112,12 +103,12 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
                 (phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(
-                __compute_peaks_features(relevant_data_phasic, sampling_frequency, offset, start_WT, end_WT, thres))
+                __compute_peak_features.__process__(relevant_data_phasic))
 
             relevant_data_tonic = tonic_data.loc[
                 (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
-
+    
         except Exception as e:
             pass
 
@@ -125,3 +116,4 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
 
     else:
         return None
+

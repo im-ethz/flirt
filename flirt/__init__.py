@@ -3,9 +3,6 @@ __version__ = "0.0.2"
 # Maintainer info
 __author__ = "The FLIRT development team"
 
-# Dependencies
-
-
 # Disable some annoying warnings
 try:
     import warnings
@@ -27,4 +24,3 @@ from .with_ import *
 # extra sub-packages
 # flirt.simple
 # flirt.reader
-# flirt.with_

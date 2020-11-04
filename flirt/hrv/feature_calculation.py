@@ -13,15 +13,6 @@ from .features.nl_features import NonLinearFeatures
 from .features.td_features import TdFeatures
 from ..stats.common import get_stats
 
-# disable astropy warnings
-try:
-    from astropy.utils.exceptions import AstropyWarning
-    import warnings
-
-    warnings.simplefilter('ignore', category=AstropyWarning)
-except:
-    pass
-
 
 class StatFeatures(DomainFeatures):
     def __get_type__(self) -> str:
@@ -108,7 +99,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
             if domain not in feature_functions.keys():
                 raise ValueError("invalid feature domain: " + domain)
 
-            #print("Calculate %s features" % domain)
+            # print("Calculate %s features" % domain)
 
             feat = __generate_features_for_domain(clean_data, window_length, threshold,
                                                   feature_function=feature_functions[domain], parallel=parallel)
