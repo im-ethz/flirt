@@ -4,16 +4,33 @@ from datetime import datetime
 import pandas as pd
 from ishneholterlib import Holter
 
+
 import flirt
 import flirt.reader.empatica
 import flirt.reader.holter
 import flirt.stats
+import flirt.eda.preprocessing as eda_preprocess
 
 
 class EmpaticaEdaTestCase(unittest.TestCase):
     def test_load_data(self):
         eda = flirt.reader.empatica.read_eda_file_into_df('wearable-data/empatica/EDA.csv')
-        eda = flirt.get_eda_features(eda['eda'])
+
+        ### Compute features based on different pre-processing techniques
+        # Default (low-pass filter->cvx->features)
+        eda_features_lpf = flirt.eda.feature_calculation.get_eda_features(data=eda['eda'])
+
+        # Using EDAexplorer Artifact Detection (svm->interpolation->low-pass filter->cvx->features)
+        eda_features_svm = flirt.eda.feature_calculation.get_eda_features(data=eda['eda'], window_length = 60, window_step_size = 1,  num_cores=2, preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.MitExplorerDetector(filepath)))
+        
+        # Using Media Lab UT Artifact Detection (lr->interpolation->low-pass filter->cvx->features)
+        eda_features_lr = flirt.eda.feature_calculation.get_eda_features(data=eda['eda'], window_length = 60, window_step_size = 1, num_cores=2, preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.LrDetector()))
+        
+        # Using Extended Kalman Filter (ekf->cvx->features)
+        eda_features_ekf = flirt.eda.feature_calculation.get_eda_features(data=eda['eda'], window_length = 60, window_step_size = 1, num_cores=2, preprocessor=eda_preprocess.ExtendedKalmanFilter())
+
+        # Using Ledalab decomposition algorithm (low-pass filter->ledalab->features)
+        eda_features_ledalab = flirt.eda.feature_calculation.get_eda_features(data=eda['eda'], signal_decomposition=eda_preprocess.LedaLab()) 
 
         # print(eda.head())
 

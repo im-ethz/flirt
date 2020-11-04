@@ -6,17 +6,9 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
-import sys
-# insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/fefespinola/ETHZ_Fall_2020/flirt-1')
+from .preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab, ExtendedKalmanFilter, MitExplorerDetector, MultiStepPipeline, LrDetector
+from ..stats.common import get_stats
 
-import flirt
-from flirt.eda.preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab
-from flirt.stats.common import get_stats
-from flirt.reader.empatica import read_eda_file_into_df
-from flirt.eda.preprocessing.ekf import ExtendedKalmanFilter
-from flirt.eda.preprocessing.artefacts import MitExplorerDetector, LrDetector
-from flirt.eda.preprocessing.pipeline import MultiStepPipeline
 
 
 def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1, num_cores=0,
@@ -63,9 +55,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     --------
     >>> import flirt.reader.empatica
     >>> import flirt.eda
-    >>> path = './empatica/1575615731_A12345'
     >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
-    >>> eda_features = flirt.eda.get_features(eda['eda'], data_frequency=4, window_length=60, window_step_size=1)
+    >>> eda_features = flirt.eda.get_eda_features(eda, data_frequency=4, window_length=60, window_step_size=1)
     """
 
     # Get number of cores
@@ -79,8 +70,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe)
 
     # advance by window_step_size * data_frequency
-    inputs = range(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
-    print(scr_features)
+    inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
+    
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(delayed(__get_features_per_window)(phasic_data, tonic_data, window_length=window_length,
@@ -91,7 +82,6 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     results.set_index('datetime', inplace=True)
     results.sort_index(inplace=True)
 
-    # print('- Feature generation completed')
 
     return results
 
@@ -127,11 +117,3 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
     else:
         return None
 
-
-##### TEST ######
-filepath = '/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica'
-eda = read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/flirt-1/test/wearable-data/empatica/EDA.csv')
-# Using EDAexplorer Artifact Detection (svm->interpolation->low-pass filter->cvx->features)
-eda_features_svm = get_eda_features(data=eda,  num_cores=1, signal_decomposition=LedaLab(), scr_features=ComputePeaks(offset=3))
-#self.assertEqual(2500, len(eda_features_svm))
-print('DONE', eda_features_svm)

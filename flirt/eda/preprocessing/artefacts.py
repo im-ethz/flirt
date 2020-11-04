@@ -4,10 +4,9 @@ import os
 import numpy as np
 import pandas as pd
 
-from flirt.eda.models import custom_featurematrix
-from flirt.eda.models.eda_explorer.EDA_Artifact_Detection_Script import eda_explorer_artifact
 from .data_utils import ArtefactsDetection
-
+from ..models import custom_featurematrix
+from ..models.eda_explorer.EDA_Artifact_Detection_Script import eda_explorer_artifact 
 
 class LrDetector(ArtefactsDetection):
     """

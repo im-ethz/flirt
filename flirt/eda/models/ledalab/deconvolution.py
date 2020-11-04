@@ -10,7 +10,6 @@ from ...models.ledalab import utils
 from ...models.ledalab import analyse
 from ...models.ledalab import leda2
 
-
 def sdeco(nr_iv):
     leda2.settings.dist0_min = 0
     leda2.settings.segmWidth = 12

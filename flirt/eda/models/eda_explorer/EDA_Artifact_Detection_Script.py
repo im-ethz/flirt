@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 from pywt import wavedec
 
-from flirt.eda.models.eda_explorer.ArtifactClassifiers import predict_binary_classifier, predict_multiclass_classifier
-from flirt.eda.models.eda_explorer.load_files import getInputLoadFile, get_user_input
+from .ArtifactClassifiers import predict_binary_classifier, predict_multiclass_classifier
+from .load_files import getInputLoadFile, get_user_input
+
 
 def getWaveletData(data):
     '''

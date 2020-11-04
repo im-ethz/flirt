@@ -11,13 +11,13 @@ class CvxEda(SignalDecomposition):
     Decompose Electrodermal Activity (EDA) into Phasic and Tonic components.
 
     This class decomposes the filtered EDA signal into tonic and phasic components using the cvxEDA algorithm. It also \
-    ensures that the tonic signal never drops below zero.
+    ensures that the tonic and phasic signals never drops below zero.
     
     Parameters
     -----------
-    data : pd.DataFrame
+    data : pd.Series
         raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
-        columns are the raw eda data: `eda` and the filtered data: `filtered_eda`
+        column is the raw eda data: `eda`
     sampling_frequency : int, optional
         the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
     tau0: float, optional
@@ -37,9 +37,9 @@ class CvxEda(SignalDecomposition):
 
     Returns
     -------
-    pd.DataFrame
-        dataframe with four columns including the raw EDA data, the filtered signal, the phasic and the tonic \
-        components, index is a list of timestamps
+    pd.Series, pd.Series
+        two dataframe including the phasic and the tonic components, index is a list of \
+        timestamps for both dataframes
 
     Examples
     --------
@@ -76,11 +76,19 @@ class CvxEda(SignalDecomposition):
         data_phasic = pd.Series(np.ravel(phasic), data.index)
         data_tonic = pd.Series(np.ravel(tonic), data.index)
 
+        
         # Check if tonic values are below zero and filter if it is the case
         if np.amin(data_tonic.values) < 0:
-            lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_frequency, order=1, cutoff=0.5, filter='butter')
+            lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_frequency, order=1, cutoff=0.2, filter='butter')
             filtered_tonic = lowpass_filter.__process__(data_tonic)
             data_tonic = filtered_tonic
+        
+        # Check if phasic values are below zero and filter if it is the case
+        if np.amin(data_phasic.values) < 0:
+            lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_frequency, order=1, cutoff=0.25, filter='butter')
+            filtered_phasic = lowpass_filter.__process__(data_phasic)
+            data_phasic = filtered_phasic
+        
 
         return data_phasic, data_tonic
 

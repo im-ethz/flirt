@@ -10,7 +10,7 @@ class ComputePeaks(PeakFeatures):
 
     Parameters
     -----------
-    df : pd.Series
+    data : pd.Series
         relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), one of the columns must include the EDA phasic component: `phasic`
     sampling_frequency : int, optional
         the frequency with which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
