@@ -2,7 +2,6 @@ import unittest
 from datetime import datetime
 
 import pandas as pd
-from ishneholterlib import Holter
 
 
 import flirt
@@ -37,8 +36,7 @@ class EmpaticaIbiTestCase(unittest.TestCase):
 
 class HolterIbiTestCase(unittest.TestCase):
     def test_load_data(self):
-        holter = Holter('wearable-data/holter/holter.ecg')
-        start_time = flirt.reader.holter.get_starttime_from_holter(holter)
+        start_time = flirt.reader.holter.get_starttime_from_holter('wearable-data/holter/holter.ecg')
 
         self.assertEqual(datetime(2019, 8, 9, 10, 5), start_time.replace(tzinfo=None))
 

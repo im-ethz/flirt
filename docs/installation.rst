@@ -11,4 +11,4 @@ Alternatively, you can checkout the source code from the `GitHub repository <htt
 
 ::
 
-   git clone https://github.com/im-ethz/flirt.git
+   git clone https://github.com/im-ethz/flirt

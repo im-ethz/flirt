@@ -108,7 +108,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     features = pd.concat(calculated_features.values(), axis=1, sort=True)
 
     target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
-                                 end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size), tz='UTC')
+                                 end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size))
 
     features = features.reindex(index=features.index.union(target_index))
 

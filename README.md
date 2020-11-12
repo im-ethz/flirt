@@ -8,7 +8,7 @@
 
 ⭐️ **Simple. Robust. Powerful.** 
 
-FLIRT is a feature generation toolkit for wearable data such as that from your smartwatch or smart ring. With FLIRT you can
+**FLIRT** is a **F**eature generation too**L**k**I**t for wea**R**able da**T**a such as that from your smartwatch or smart ring. With FLIRT you can
 easily transform wearable data into meaningful features which can then be used for example in machine learning or AI models.
 
 In contrast to other existing toolkits, FLIRT (1) focuses on physiological data recorded with
@@ -46,7 +46,7 @@ pip install flirt
 
 Alternatively, you can checkout the source code from the [GitHub repository](https://github.com/im-ethz/flirt):
 ```
-git clone https://github.com/im-ethz/flirt.git
+git clone https://github.com/im-ethz/flirt
 ```
 
 
