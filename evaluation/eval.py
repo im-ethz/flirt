@@ -58,8 +58,13 @@ def find_label_timestamps(csv_path, StartingTime):
     for mode in df_timestamp.columns.tolist():
         print('mode', mode)
         if mode=='Base' or mode=='Fun' or mode=='TSST':
-            labels_times_dict[mode] = [StartingTime + timedelta(minutes = float(df_timestamp[mode][0])), 
-                                  StartingTime + timedelta(minutes = float(df_timestamp[mode][1])), lab_dict[mode]]
+            labels_times_dict[mode] = [StartingTime + timedelta(minutes = int(str(df_timestamp[mode][0]).split(".")[0]))+ timedelta                                         
+                                    (seconds = int(str(df_timestamp[mode][0]).split(".")[1])), 
+                                    StartingTime + timedelta(minutes = int(str(df_timestamp[mode][1]).split(".")[0])) + timedelta                                           
+                                    (seconds = int(str(df_timestamp[mode][1]).split(".")[1])), lab_dict[mode]]
+            
+            #labels_times_dict[mode] = [StartingTime + timedelta(minutes = float(df_timestamp[mode][0])), 
+            #                      StartingTime + timedelta(minutes = float(df_timestamp[mode][1])), lab_dict[mode]]
         
     return labels_times_dict
 
@@ -156,11 +161,11 @@ def main():
     return df_all
 
 if __name__ == '__main__':
-    #df_all = main()
-    #df_all.to_csv('features_all_all_lr_feat.csv')
-    df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lr_feat.csv')
+    df_all = main()
+    df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lr_0_1_feat.csv')
+    df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lr_0_1_feat.csv')
     df_all.set_index('timedata', inplace=True)
-    print(df_all)
+    print(df_all.ID)
     
     ### for binary classification uncomment line below 
     #df_all['label'].replace(2, 0, inplace=True)
