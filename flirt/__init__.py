@@ -23,9 +23,11 @@ except:
 from .acc import get_acc_features
 from .eda import get_eda_features
 from .hrv import get_hrv_features
+from .bvp import get_bvp_features
+from .temp import get_temp_features
 from .stats import get_stat_features
 
 # extra sub-packages
-# flirt.simple
-# flirt.reader
-# flirt.with_
+#from .simple import get_features_for_empatica_archive
+from flirt.reader import empatica
+#import flirt.with_

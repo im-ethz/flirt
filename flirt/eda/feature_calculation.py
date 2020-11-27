@@ -8,10 +8,11 @@ from tqdm.autonotebook import trange
 
 from .preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab, ExtendedKalmanFilter, MitExplorerDetector, MultiStepPipeline, LrDetector
 from ..stats.common import get_stats
+from .preprocessing import get_MFCC_stats, get_fd_stats
 
 
 
-def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: int = 1, num_cores=0,
+def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: float = 1.0, num_cores=2,
                      preprocessor: data_utils.Preprocessor = LowPassFilter(),
                      signal_decomposition: data_utils.SignalDecomposition = CvxEda(),
                      scr_features: data_utils.PeakFeatures = ComputePeaks()):
@@ -70,7 +71,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe)
 
     # advance by window_step_size * data_frequency
-    inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
+    inputs = trange(0, len(data) - 1, 
+            int(window_step_size * data_frequency), desc="EDA features")
     
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
@@ -81,7 +83,6 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     results = pd.DataFrame(list(results))
     results.set_index('datetime', inplace=True)
     results.sort_index(inplace=True)
-
 
     return results
 
@@ -102,12 +103,16 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
             relevant_data_phasic = phasic_data.loc[
                 (phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
+            results.update(get_fd_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
+            results.update(get_MFCC_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(
                 __compute_peak_features.__process__(relevant_data_phasic))
 
             relevant_data_tonic = tonic_data.loc[
                 (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
+            results.update(get_fd_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
+            results.update(get_MFCC_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
     
         except Exception as e:
             pass

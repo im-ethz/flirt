@@ -1,6 +1,8 @@
 from typing import List
 
 import pandas as pd
+import os
+import zipfile
 
 from ..util import io
 
@@ -35,6 +37,7 @@ def read_acc_file_into_df(filepath_or_buffer) -> pd.DataFrame:
 
 
 def __read_frequency_based_file_into_df(filepath_or_buffer, column_names: List[str]) -> pd.DataFrame:
+
     if io.is_file_like(filepath_or_buffer):
         file_to_read = filepath_or_buffer
         close_file = False
@@ -74,7 +77,6 @@ def read_ibi_file_into_df(filepath_or_buffer) -> pd.DataFrame:
         a pd.DataFrame with an 'ibi' columns, IBIs in milliseconds
 
     """
-
     if io.is_file_like(filepath_or_buffer):
         file_to_read = filepath_or_buffer
         close_file = False

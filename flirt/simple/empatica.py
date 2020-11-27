@@ -1,18 +1,28 @@
 import os
-import zipfile
+import sys
+if sys.version_info >= (3, 7):
+    import zipfile
+else:
+    import zipfile37 as zipfile
 
 import pandas as pd
 
-# import flirt
-import flirt.reader.empatica
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/home/fefespinola/ETHZ_Fall_2020/flirt-1')
 
+import flirt
+import flirt.reader.empatica
+import flirt.eda.preprocessing as eda_preprocess
 
 def get_features_for_empatica_archive(zip_file_path: str,
                                       window_length: int = 180,
-                                      window_step_size: int = 1,
+                                      window_step_size: float = 1.0,
                                       hrv_features: bool = True,
                                       eda_features: bool = True,
                                       acc_features: bool = True,
+                                      bvp_features: bool = True,
+                                      temp_features: bool = True,
                                       debug: bool = False) -> pd.DataFrame:
     """
     This function provides a standard set of HRV, EDA, ACC features for a given Empatica archive \
@@ -55,16 +65,19 @@ def get_features_for_empatica_archive(zip_file_path: str,
     df_hrv_features = pd.DataFrame()
     df_eda_features = pd.DataFrame()
     df_acc_features = pd.DataFrame()
+    df_bvp_features = pd.DataFrame()
+    df_temp_features = pd.DataFrame()
 
-    with zipfile.ZipFile(zip_file_path) as zip_file:
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_file:
         if hrv_features:
-            with zip_file.open("IBI.csv") as f:
+            with zip_file.open("IBI.csv", "r") as f:
                 ibi_data = flirt.reader.empatica.read_ibi_file_into_df(f)
 
-            if debug:
-                print("Calculating HRV features")
-            df_hrv_features = flirt.hrv.get_hrv_features(ibi_data.iloc[:, 0], window_length=window_length,
-                                                         window_step_size=window_step_size)
+                if debug:
+                    print("Calculating HRV features")
+                df_hrv_features = flirt.hrv.get_hrv_features(ibi_data.iloc[:, 0], window_length=window_length,
+                                                            window_step_size=window_step_size).add_prefix('hrv_')
+
 
         if eda_features:
             with zip_file.open("EDA.csv") as f:
@@ -72,8 +85,14 @@ def get_features_for_empatica_archive(zip_file_path: str,
 
                 if debug:
                     print("Calculating EDA features")
+                # change for different subjects!!!
+                #filepath = '/home/fefespinola/ETHZ_Fall_2020/project_data/WESAD/S4' # for S4!!!
+                #preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.MitExplorerDetector(filepath))
                 df_eda_features = flirt.eda.get_eda_features(eda_data.iloc[:, 0], window_length=window_length,
-                                                             window_step_size=window_step_size).add_prefix('eda_')
+                                                             window_step_size=window_step_size,
+                                                             preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.LrDetector(), 
+                                                             eda_preprocess.LowPassFilter(cutoff=1.0))).add_prefix('eda_')
+                                                    
 
         if acc_features:
             with zip_file.open("ACC.csv") as f:
@@ -84,16 +103,37 @@ def get_features_for_empatica_archive(zip_file_path: str,
                 df_acc_features = flirt.acc.get_acc_features(acc_data[:], window_length=window_length,
                                                              window_step_size=window_step_size).add_prefix('acc_')
 
-        return __merge_features(df_hrv_features, df_eda_features, df_acc_features, freq='%ds' % window_step_size)
+
+        if bvp_features:
+            with zip_file.open("BVP.csv") as f:
+                bvp_data = flirt.reader.empatica.read_bvp_file_into_df(f)
+
+                if debug:
+                    print("Calculating BVP features")
+                df_bvp_features = flirt.bvp.get_bvp_features(bvp_data.iloc[:, 0], window_length=window_length,
+                                                             window_step_size=window_step_size).add_prefix('bvp_')
 
 
-def __merge_features(hrv_features: pd.DataFrame, eda_features: pd.DataFrame, acc_features: pd.DataFrame,
-                     freq: str = '1s') -> pd.DataFrame:
-    if hrv_features.empty and eda_features.empty and acc_features.empty:
+        if temp_features:
+            with zip_file.open("TEMP.csv") as f:
+                temp_data = flirt.reader.empatica.read_temp_file_into_df(f)
+
+                if debug:
+                    print("Calculating temperature features")
+                df_temp_features = flirt.temp.get_temp_features(temp_data.iloc[:, 0], window_length=window_length,
+                                                             window_step_size=window_step_size).add_prefix('temp_')
+                zip_file.close()
+
+        return __merge_features(df_hrv_features, df_eda_features, df_acc_features, df_bvp_features, df_temp_features, freq='%dms' % (window_step_size*1000))
+
+
+def __merge_features(hrv_features: pd.DataFrame, eda_features: pd.DataFrame, acc_features: pd.DataFrame, bvp_features: pd.DataFrame,
+                     temp_features: pd.DataFrame, freq: str = '1s') -> pd.DataFrame:
+    if hrv_features.empty and eda_features.empty and acc_features.empty and bvp_features.empty and temp_features.empty:
         print("Received empty input features, returning empty df")
         return pd.DataFrame()
 
-    merged_features = pd.concat([hrv_features, eda_features, acc_features], axis=1, sort=True)
+    merged_features = pd.concat([hrv_features, eda_features, acc_features, bvp_features, temp_features], axis=1, sort=True)
 
     target_index = pd.date_range(start=merged_features.iloc[0].name.ceil('s'),
                                  end=merged_features.iloc[-1].name.floor('s'), freq=freq, tz='UTC')

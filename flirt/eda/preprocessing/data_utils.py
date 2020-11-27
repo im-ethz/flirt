@@ -30,3 +30,4 @@ class PeakFeatures(object):
     @abstractmethod
     def __process__(self, data: pd.Series) -> dict:
         raise NotImplementedError
+    

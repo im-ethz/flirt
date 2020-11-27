@@ -36,9 +36,9 @@ feature_functions = {
 }
 
 
-def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size: int = 1,
+def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size: float = 1.0,
                      domains: List[str] = ['td', 'fd', 'stat'], threshold: float = 0.2,
-                     clean_data: bool = True, num_cores: int = 0):
+                     clean_data: bool = True, num_cores: int = 2):
     """
     Computes HRV features for different domains (time-domain, frequency-domain, non-linear, statistical).
 
@@ -111,7 +111,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     features = pd.concat(calculated_features.values(), axis=1, sort=True)
 
     target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
-                                 end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size), tz='UTC')
+                                 end=features.iloc[-1].name.floor('s'), freq='%dms' % (window_step_size*1000), tz='UTC')
 
     features = features.reindex(index=features.index.union(target_index))
 

@@ -34,7 +34,10 @@ requirements = [
     "ishneholterlib",
     "numba",
     "astropy", 
-    "sympy"
+    "sympy",
+    "glob2",
+    "os",
+    "lightgbm"
 ]
 
 extras_require = {

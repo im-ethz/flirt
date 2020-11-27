@@ -5,6 +5,8 @@ from .low_pass import LowPassFilter
 from .pipeline import MultiStepPipeline
 from .peak_features import ComputePeaks
 from .ledalab import LedaLab
+from .fd_stats import get_fd_stats
+from .MFCC_stats import get_MFCC_stats
 
 __all__ = [
     "CvxEda",
@@ -14,4 +16,6 @@ __all__ = [
     "MitExplorerDetector",
     "ComputePeaks",
     "LedaLab",
+    "get_fd_stats",
+    "get_MFCC_stats",
 ]
