@@ -93,11 +93,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
             if domain not in feature_functions.keys():
                 raise ValueError("invalid feature domain: " + domain)
 
-<<<<<<< HEAD
             print("Calculate %s features" % domain)
-=======
-            # print("Calculate %s features" % domain)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
             feat = __generate_features_for_domain(clean_data, window_length, threshold,
                                                   feature_function=feature_functions[domain], parallel=parallel)
@@ -106,11 +102,7 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     features = pd.concat(calculated_features.values(), axis=1, sort=True)
 
     target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
-<<<<<<< HEAD
                                  end=features.iloc[-1].name.floor('s'), freq='%dms' % (window_step_size*1000), tz='UTC')
-=======
-                                 end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size))
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     features = features.reindex(index=features.index.union(target_index))
 
