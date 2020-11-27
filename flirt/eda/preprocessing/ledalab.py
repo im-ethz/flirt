@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 from __future__ import division
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 import numpy as np
 import pandas as pd
 
@@ -6,6 +9,10 @@ from .data_utils import SignalDecomposition
 from .low_pass import LowPassFilter
 from ..models.ledalab import leda2, utils, analyse, deconvolution
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 class LedaLab(SignalDecomposition):
     """
     Decompose Electrodermal Activity (EDA) into Phasic and Tonic components.
@@ -44,7 +51,11 @@ class LedaLab(SignalDecomposition):
     - https://github.com/HIIT/Ledapy
     """
 
+<<<<<<< HEAD
     def __init__(self, sampling_rate: int=4, downsample: int=1, optimisation: int=0):
+=======
+    def __init__(self, sampling_rate: int = 4, downsample: int = 1, optimisation: int = 0):
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
         self.sampling_rate = sampling_rate
         self.downsample = downsample
@@ -59,7 +70,11 @@ class LedaLab(SignalDecomposition):
         leda2.current.do_optimize = self.optimisation
         self.import_data(data)
         deconvolution.sdeco(self.optimisation)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         phasic = leda2.analysis.phasicData
         tonic = leda2.analysis.tonicData
 
@@ -67,7 +82,10 @@ class LedaLab(SignalDecomposition):
         data_phasic = pd.Series(np.ravel(phasic), data.index)
         data_tonic = pd.Series(np.ravel(tonic), data.index)
 
+<<<<<<< HEAD
         
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         # Check if tonic values are below zero and filter if it is the case
         if np.amin(data_tonic.values) < 0:
             lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_rate, order=1, cutoff=0.2, filter='butter')
@@ -79,7 +97,10 @@ class LedaLab(SignalDecomposition):
             lowpass_filter = LowPassFilter(sampling_frequency=self.sampling_rate, order=1, cutoff=0.25, filter='butter')
             filtered_phasic = lowpass_filter.__process__(data_phasic)
             data_phasic = filtered_phasic
+<<<<<<< HEAD
         
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
         return data_phasic, data_tonic
 
@@ -88,7 +109,11 @@ class LedaLab(SignalDecomposition):
         Sets leda2 object to its appropriate values to allow analysis
         Adapted from main/import/import_data.m
         """
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         conductance_data = np.array(data.values, dtype='float64')
         time_data = utils.genTimeVector(conductance_data, self.sampling_rate)
 
@@ -103,5 +128,8 @@ class LedaLab(SignalDecomposition):
         leda2.data.conductance_max = np.max(conductance_data)
         leda2.data.conductance_smoothData = conductance_data
         analyse.trough2peak_analysis()
+<<<<<<< HEAD
 
     
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

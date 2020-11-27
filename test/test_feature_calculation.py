@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 
 import pandas as pd
-from ishneholterlib import Holter
+
 
 
 import flirt
@@ -10,6 +10,7 @@ import flirt.reader.empatica
 import flirt.reader.holter
 import flirt.stats
 import flirt.eda.preprocessing as eda_preprocess
+<<<<<<< HEAD
 
 
 class EmpaticaEdaTestCase(unittest.TestCase):
@@ -36,6 +37,8 @@ class EmpaticaEdaTestCase(unittest.TestCase):
 
         self.assertEqual(2500, len(eda))
 
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 class EmpaticaAccTestCase(unittest.TestCase):
     def test_load_data(self):
@@ -63,8 +66,7 @@ class EmpaticaIbiTestCase(unittest.TestCase):
 
 class HolterIbiTestCase(unittest.TestCase):
     def test_load_data(self):
-        holter = Holter('wearable-data/holter/holter.ecg')
-        start_time = flirt.reader.holter.get_starttime_from_holter(holter)
+        start_time = flirt.reader.holter.get_starttime_from_holter('wearable-data/holter/holter.ecg')
 
         self.assertEqual(datetime(2019, 8, 9, 10, 5), start_time.replace(tzinfo=None))
 

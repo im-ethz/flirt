@@ -12,6 +12,10 @@ class Current:
     """
     Stores current values (old Ledalab's current.batchmode parameters)
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     def __init__(self):
         """
         Sets default values. Values such as filter_settings, smooth, downsample removed from this version
@@ -23,6 +27,10 @@ class Analysis:
     """
     Stores all variables related to current analysis.
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     class Target:
         def __init__(self):
             self.tonicDriver = None
@@ -77,6 +85,10 @@ class Settings:
     """
     Stores default settings.
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     class InitVal:
         def __init__(self):
             self.hannWinWidth = .5
@@ -90,7 +102,11 @@ class Settings:
         self.dist0_min = .001
         self.initVal = Settings.InitVal()
         self.tonicGridSize_sdeco = 10.0
+<<<<<<< HEAD
         self.tau0_sdeco = [1.0, 3.75]   # see Benedek & Kaernbach, 2010, J Neurosc Meth
+=======
+        self.tau0_sdeco = [1.0, 3.75]  # see Benedek & Kaernbach, 2010, J Neurosc Meth
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         self.d0Autoupdate_sdeco = 0.0
         self.smoothwin_sdeco = .2
         self.sigPeak = .001
@@ -102,6 +118,10 @@ class Data:
     data.conductance.data = data.conductance_data in this version
     data.time.data = data.time_data in this version
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     def __init__(self):
         self.time_data = None
         self.conductance_data = None
@@ -123,6 +143,10 @@ class Trough2peakAnalysis:
         self.peaktime_idx = None
         self.amp = None
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 # globals used to pass settings across modules
 settings = Settings()
 analysis = Analysis()
@@ -143,9 +167,17 @@ def reset():
     current = Current()
     data = Data()
     trough2peakAnalysis = Trough2peakAnalysis()
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 def delete_fit(self):
     global analysis0, analysis
     analysis0 = Analysis()
+<<<<<<< HEAD
     analysis = Analysis()
+=======
+    analysis = Analysis()
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

@@ -3,8 +3,13 @@ import pandas as pd
 
 from .data_utils import PeakFeatures
 
+<<<<<<< HEAD
 class ComputePeaks(PeakFeatures):
 
+=======
+
+class ComputePeaks(PeakFeatures):
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     """
     This function computes the peaks features for the relevant phasic data in the EDA signal. 
 
@@ -55,19 +60,32 @@ class ComputePeaks(PeakFeatures):
         result_df['rise_time'] = returned_peak_data[7]
         result_df['decay_time'] = returned_peak_data[8]
         result_df['SCR_width'] = returned_peak_data[9]
+<<<<<<< HEAD
         result_df['start_peak'] = returned_peak_data[2]
 
         # To keep all filtered data remove this line
         feature_data = result_df[result_df.peaks == 1][
             ['peaks', 'rise_time', 'max_deriv', 'amp', 'decay_time', 'SCR_width', 'start_peak']]
+=======
+
+        # To keep all filtered data remove this line
+        feature_data = result_df[result_df.peaks == 1][
+            ['peaks', 'rise_time', 'max_deriv', 'amp', 'decay_time', 'SCR_width']]
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
         # Replace 0s with NaN, this is where the 50% of the peak was not found, too close to the next peak
         # feature_data[['SCR_width','decay_time']]=feature_data[['SCR_width','decay_time']].replace(0, np.nan)
         feature_data['AUC'] = feature_data['amp'] * feature_data['SCR_width']
+<<<<<<< HEAD
         #feature_data['AUC_precise'] = abs(np.diff(data[data.index[feature_data['start_peak']]:data.index[feature_data['start_peak'] + timedelta(seconds=5.0)]])).sum()
 
         results = {}
         features_names = ['peaks_p', 'rise_time_p', 'max_deriv_p', 'amp_p', 'decay_time_p', 'SCR_width_p', 'auc_p_m', 'auc_p_s']
+=======
+
+        results = {}
+        features_names = ['peaks_p', 'rise_time_p', 'max_deriv_p', 'amp_p', 'decay_time_p', 'SCR_width_p', 'auc_p']
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         if len(data) > 0:
             results['peaks_p'] = len(feature_data)
             results['rise_time_p'] = result_df[result_df.peaks != 0.0].rise_time.mean()
@@ -75,8 +93,12 @@ class ComputePeaks(PeakFeatures):
             results['amp_p'] = result_df[result_df.peaks != 0.0].amp.mean()
             results['decay_time_p'] = feature_data[feature_data.peaks != 0.0].decay_time.mean()
             results['SCR_width_p'] = feature_data[feature_data.peaks != 0.0].SCR_width.mean()
+<<<<<<< HEAD
             results['auc_p_m'] = feature_data[feature_data.peaks != 0.0].AUC.mean()
             results['auc_p_s'] = feature_data[feature_data.peaks != 0.0].AUC.sum()
+=======
+            results['auc_p'] = feature_data[feature_data.peaks != 0.0].AUC.mean()
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
             for key in features_names:
                 if np.isnan(results[key]):
                     results[key] = 0.0
@@ -109,7 +131,11 @@ class ComputePeaks(PeakFeatures):
         max_deriv:           list of floats, max derivative within 1 second of apex of SCR
         """
         sample_rate = self.sampling_frequency
+<<<<<<< HEAD
         offset = self.offset*self.sampling_frequency
+=======
+        offset = self.offset * self.sampling_frequency
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         start_WT = self.start_WT
         end_WT = self.end_WT
         thres = self.thres
@@ -145,7 +171,12 @@ class ComputePeaks(PeakFeatures):
                         found = True
                         peak_start[find_start] = 1
                         peak_start_times[i] = data.index[find_start]
+<<<<<<< HEAD
                         rise_time[i] = self.__get_seconds_and_microseconds(data.index[i] - pd.to_datetime(peak_start_times[i]))
+=======
+                        rise_time[i] = self.__get_seconds_and_microseconds(
+                            data.index[i] - pd.to_datetime(peak_start_times[i]))
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
                     find_start = find_start - 1
 
@@ -187,7 +218,12 @@ class ComputePeaks(PeakFeatures):
                         found = True
                         peak_end[find_end] = 1
                         peak_end_times[i] = data.index[find_end]
+<<<<<<< HEAD
                         decay_time[i] = self.__get_seconds_and_microseconds(pd.to_datetime(peak_end_times[i]) - data.index[i])
+=======
+                        decay_time[i] = self.__get_seconds_and_microseconds(
+                            pd.to_datetime(peak_end_times[i]) - data.index[i])
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
                         # Find width
                         find_rise = i
@@ -220,4 +256,7 @@ class ComputePeaks(PeakFeatures):
 
     def __get_seconds_and_microseconds(self, pandas_time):
         return pandas_time.seconds + pandas_time.microseconds * 1e-6
+<<<<<<< HEAD
 
+=======
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

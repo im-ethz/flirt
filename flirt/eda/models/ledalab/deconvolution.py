@@ -1,6 +1,7 @@
 """
 Ledalab deconvolution functions (original folder: Ledalab/analyze/deconvolution)
 """
+<<<<<<< HEAD
 from __future__ import division
 import numpy as np
 from numpy import array as npa
@@ -9,6 +10,12 @@ from scipy.signal import deconvolve
 from ...models.ledalab import utils
 from ...models.ledalab import analyse
 from ...models.ledalab import leda2
+=======
+import numpy as np
+from scipy.signal import convolve, deconvolve
+from . import utils, analyse, leda2
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 def sdeco(nr_iv):
     leda2.settings.dist0_min = 0
@@ -16,8 +23,13 @@ def sdeco(nr_iv):
 
     # Downsample data for preanalysis, downsample if N > N_max but keep
     # samplingrate at 4 Hz minimum
+<<<<<<< HEAD
     leda2.analysis0.target.t = npa(leda2.data.time_data)
     leda2.analysis0.target.d = npa(leda2.data.conductance_data)
+=======
+    leda2.analysis0.target.t = np.array(leda2.data.time_data)
+    leda2.analysis0.target.d = np.array(leda2.data.conductance_data)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     leda2.analysis0.target.sr = leda2.data.samplingrate
 
     Fs_min = 4
@@ -39,18 +51,30 @@ def sdeco(nr_iv):
             else:
                 idx = len(factorL) - 1  # if no factor meets criterium, take largest factor
             fac = factorL[idx]
+<<<<<<< HEAD
             (td, scd) = utils.downsamp(npa(leda2.data.time_data), npa(leda2.data.conductance_data), fac)
+=======
+            (td, scd) = utils.downsamp(np.array(leda2.data.time_data), np.array(leda2.data.conductance_data), fac)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
             leda2.analysis0.target.t = td
             leda2.analysis0.target.d = scd
             leda2.analysis0.target.sr = FsL[idx]
         else:
             pass  # can not be downsampled any further
 
+<<<<<<< HEAD
     leda2.analysis0.tau = npa(leda2.settings.tau0_sdeco)
     leda2.analysis0.smoothwin = leda2.settings.smoothwin_sdeco  # sec
     leda2.analysis0.tonicGridSize = leda2.settings.tonicGridSize_sdeco
 
     [err, x] = sdeconv_analysis(npa(leda2.analysis0.tau))  # set dist0
+=======
+    leda2.analysis0.tau = np.array(leda2.settings.tau0_sdeco)
+    leda2.analysis0.smoothwin = leda2.settings.smoothwin_sdeco  # sec
+    leda2.analysis0.tonicGridSize = leda2.settings.tonicGridSize_sdeco
+
+    [err, x] = sdeconv_analysis(np.array(leda2.analysis0.tau))  # set dist0
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     optimized_tau = deconv_optimize(x, nr_iv)
     if optimized_tau is not None:
         leda2.analysis0.tau = optimized_tau
@@ -64,24 +88,40 @@ def sdeconv_analysis(x, estim_tonic=1):
     # Check Limits
     x[0] = utils.withinlimits(x[0], leda2.settings.tauMin, 10)
     x[1] = utils.withinlimits(x[1], leda2.settings.tauMin, 20)
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     if x[1] < x[0]:  # tau1 < tau2
         x = x[::-1]
     if abs(x[0] - x[1]) < leda2.settings.tauMinDiff:
         x[1] = x[1] + leda2.settings.tauMinDiff
 
+<<<<<<< HEAD
     tau = npa(x[0:2])
 
     data = npa(leda2.analysis0.target.d)
     t = npa(leda2.analysis0.target.t)
     sr = npa(leda2.analysis0.target.sr)
+=======
+    tau = np.array(x[0:2])
+
+    data = np.array(leda2.analysis0.target.d)
+    t = np.array(leda2.analysis0.target.t)
+    sr = np.array(leda2.analysis0.target.sr)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     smoothwin = leda2.analysis0.smoothwin * 8
     dt = 1 / sr
     winwidth_max = 3  # sec
     swin = round(np.minimum(smoothwin, winwidth_max) * sr)
 
+<<<<<<< HEAD
     d = npa(data)
+=======
+    d = np.array(data)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     # Data preparation
     tb = t - t[0] + dt
@@ -90,7 +130,11 @@ def sdeconv_analysis(x, estim_tonic=1):
     idx = np.argmax(bg)
 
     prefix = bg[:idx + 1] / bg[idx + 1] * d[0]  # +10
+<<<<<<< HEAD
     prefix = npa(prefix)
+=======
+    prefix = np.array(prefix)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     prefix_idx = np.flatnonzero(prefix)
     prefix = prefix[prefix_idx]
     n_prefix = len(prefix)
@@ -104,7 +148,11 @@ def sdeconv_analysis(x, estim_tonic=1):
     # Adaptive kernel size
     midx = np.argmax(kernel)
     kernelaftermx = kernel[midx + 1:]
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     kernel = np.hstack((kernel[:midx + 1], kernelaftermx[kernelaftermx > pow(10, -5)]))
     kernel = kernel / sum(kernel)  # normalize to sum = 1
 
@@ -123,11 +171,20 @@ def sdeconv_analysis(x, estim_tonic=1):
     Original call - changed because variables were unused:
     (onset_idx, impulse, overshoot, impMin, impMax) = analyse.segment_driver(driverSC_smooth, np.zeros(len(driverSC_smooth)), 1, sigc, round(sr * leda2.settings.segmWidth))
     """
+<<<<<<< HEAD
     (impMin, impMax) = analyse.segment_driver(driverSC_smooth, np.zeros(len(driverSC_smooth)), 1, sigc, round(sr * leda2.settings.segmWidth))
     if estim_tonic:
         (tonicDriver, tonicData) = analyse.sdeco_interimpulsefit(driverSC_smooth, kernel, impMin, impMax)
     else:
         tonicDriver = npa(leda2.analysis0.target.tonicDriver)
+=======
+    (impMin, impMax) = analyse.segment_driver(driverSC_smooth, np.zeros(len(driverSC_smooth)), 1, sigc,
+                                              round(sr * leda2.settings.segmWidth))
+    if estim_tonic:
+        (tonicDriver, tonicData) = analyse.sdeco_interimpulsefit(driverSC_smooth, kernel, impMin, impMax)
+    else:
+        tonicDriver = np.array(leda2.analysis0.target.tonicDriver)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         nKernel = len(kernel)
         convolvobj = np.hstack((tonicDriver[0] * np.ones(nKernel), tonicDriver))
         tonicData = convolve(convolvobj, kernel)
@@ -144,7 +201,11 @@ def sdeconv_analysis(x, estim_tonic=1):
     err_chi2 = err_RMSE / leda2.data.conductance_error
     err1d = deverror(phasicDriver, .2)
     err1s = analyse.succnz(phasicDriver, np.maximum(.01, np.max(phasicDriver) / 20), 2, sr)
+<<<<<<< HEAD
     phasicDriverNeg = npa(phasicDriver)
+=======
+    phasicDriverNeg = np.array(phasicDriver)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     phasicDriverNeg[np.flatnonzero(phasicDriverNeg > 0)] = 0
     err_discreteness = err1s
     err_negativity = np.sqrt(np.mean(pow(phasicDriverNeg, 2)))
@@ -180,7 +241,11 @@ def deverror(v, elim):
         raise ValueError('v is not a numpy array')
 
     idx = np.logical_and(v > 0, v < elim)
+<<<<<<< HEAD
     err = 1 + ( np.sum(v[idx]) / elim - np.sum(idx) ) / len(v)
+=======
+    err = 1 + (np.sum(v[idx]) / elim - np.sum(idx)) / len(v)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     return err
 
 
@@ -193,7 +258,11 @@ def deconv_optimize(x0, nr_iv):
         return None
     xList = [x0, [1, 2], [1, 6], [1, 8], [.5, 2], [.5, 4], [.5, 6], [.5, 8]]
     x_opt = list()
+<<<<<<< HEAD
     err_opt = npa([])
+=======
+    err_opt = np.array([])
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     for i in range(np.minimum(nr_iv, len(xList))):
         (x, error) = analyse.cgd(xList[i], sdeconv_analysis, [.3, 2], .01, 20, .05)
         x_opt.append(x)
@@ -209,9 +278,15 @@ def deconv_apply():
     """
     # Prepare target data for full resolution analysis
 
+<<<<<<< HEAD
     leda2.analysis0.target.tonicDriver = npa(leda2.analysis0.target.poly.__call__(leda2.data.time_data))
     leda2.analysis0.target.t = npa(leda2.data.time_data)
     leda2.analysis0.target.d = npa(leda2.data.conductance_data)
+=======
+    leda2.analysis0.target.tonicDriver = np.array(leda2.analysis0.target.poly.__call__(leda2.data.time_data))
+    leda2.analysis0.target.t = np.array(leda2.data.time_data)
+    leda2.analysis0.target.d = np.array(leda2.data.conductance_data)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     leda2.analysis0.target.sr = leda2.data.samplingrate
 
     sdeconv_analysis(leda2.analysis0.tau, 0)
@@ -238,12 +313,24 @@ def deconv_apply():
         sc_reconv = convolve(driver_segment, leda2.analysis.kernel)
         leda2.analysis.amp[iPeak] = np.max(sc_reconv)
         mx_idx = np.flatnonzero(sc_reconv == np.max(sc_reconv))
+<<<<<<< HEAD
         leda2.analysis.peakTime[iPeak] = t[minL[iPeak]] + mx_idx[0] / leda2.data.samplingrate  # SCR peak could be outside of SC time range
 
     negamp_idx = np.flatnonzero(leda2.analysis.amp < .001)  # criterion removes peaks at end of sc_reconv due to large negative driver-segments
+=======
+        leda2.analysis.peakTime[iPeak] = t[minL[iPeak]] + mx_idx[
+            0] / leda2.data.samplingrate  # SCR peak could be outside of SC time range
+
+    negamp_idx = np.flatnonzero(
+        leda2.analysis.amp < .001)  # criterion removes peaks at end of sc_reconv due to large negative driver-segments
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     leda2.analysis.impulseOnset = np.delete(leda2.analysis.impulseOnset, negamp_idx)
     leda2.analysis.impulsePeakTime = np.delete(leda2.analysis.impulsePeakTime, negamp_idx)
     leda2.analysis.impulseAmp = np.delete(leda2.analysis.impulseAmp, negamp_idx)
     leda2.analysis.onset = np.delete(leda2.analysis.onset, negamp_idx)
     leda2.analysis.amp = np.delete(leda2.analysis.amp, negamp_idx)
+<<<<<<< HEAD
     leda2.analysis.peakTime = np.delete(leda2.analysis.peakTime, negamp_idx)
+=======
+    leda2.analysis.peakTime = np.delete(leda2.analysis.peakTime, negamp_idx)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

@@ -3,9 +3,6 @@ __version__ = "0.0.1"
 # Maintainer info
 __author__ = "The FLIRT development team"
 
-# Dependencies
-
-
 # Disable some annoying warnings
 try:
     import warnings
@@ -28,6 +25,11 @@ from .temp import get_temp_features
 from .stats import get_stat_features
 
 # extra sub-packages
+<<<<<<< HEAD
 #from .simple import get_features_for_empatica_archive
 from flirt.reader import empatica
 #import flirt.with_
+=======
+# flirt.simple
+# flirt.reader
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

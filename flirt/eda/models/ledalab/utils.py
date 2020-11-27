@@ -1,10 +1,15 @@
 """
 Helper functions not necessarily related to skin conductance but useful for matlab-like python usage
 """
+<<<<<<< HEAD
 from __future__ import division
 import subprocess
 import numpy as np
 from numpy import array as npa
+=======
+import subprocess
+import numpy as np
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 import itertools
 from sympy import factorint
 from scipy.stats import norm
@@ -42,14 +47,24 @@ def get_peaks(data):
     Original location: main/util/get_peaks.m
     """
     if not isinstance(data, np.ndarray):
+<<<<<<< HEAD
         data = npa(data)
     cccrimin = npa([])
     cccrimax = npa([])
+=======
+        data = np.array(data)
+    cccrimin = np.array([])
+    cccrimax = np.array([])
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     ccd = np.diff(data)
     # Search for signum changes in first differntial:
     # slower but safer method to determine extrema than looking for zeros (taking into account
     # plateaus where ccd does not immediatly change the signum at extrema)
+<<<<<<< HEAD
     cccri = npa([])
+=======
+    cccri = np.array([])
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     start_idx = np.flatnonzero(ccd)
     if len(start_idx) == 0:
         return (None, None)
@@ -69,7 +84,11 @@ def get_peaks(data):
     cccri.sort()
     cccrimin = cccri[::2]  # list of minima
     cccrimax = cccri[1::2]  # list of maxima
+<<<<<<< HEAD
     return (npa(cccrimin, dtype='int'), npa(cccrimax, dtype='int'))
+=======
+    return (np.array(cccrimin, dtype='int'), np.array(cccrimax, dtype='int'))
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 
 def factor(x):
@@ -124,7 +143,11 @@ def smooth_adapt(data, winwidth_max, err_crit):
     ce = np.sqrt(np.mean(pow(np.diff(data), 2)) / 2)
     iterL = np.arange(0, winwidth_max + 4, 4)
     if len(iterL) < 2:
+<<<<<<< HEAD
         iterL = npa([0, 2])
+=======
+        iterL = np.array([0, 2])
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     count = 0
     for i in range(1, len(iterL)):
         count = i
@@ -154,17 +177,29 @@ def smooth(data, winwidth_in):
     if winwidth_in < 1:
         return data
     if not isinstance(data, np.ndarray):
+<<<<<<< HEAD
         data = npa(data)
     if not len(data.shape) == 1:
         raise ValueError('data is not a vector. Shape: ' + str(data.shape))
     paddata = npa(np.hstack((data[0], data, data[-1])))  # pad to remove border errors
+=======
+        data = np.array(data)
+    if not len(data.shape) == 1:
+        raise ValueError('data is not a vector. Shape: ' + str(data.shape))
+    paddata = np.array(np.hstack((data[0], data, data[-1])))  # pad to remove border errors
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     winwidth = int(np.floor(winwidth_in / 2) * 2)  # force even winsize for odd window
     window = norm.pdf(np.arange(0, winwidth + 1), winwidth / 2 + 1, winwidth / 8)
     window = window / np.sum(window)  # normalize window
 
     data_ext = np.hstack(((np.zeros(winwidth // 2) + 1) * paddata[0],
                           paddata,
+<<<<<<< HEAD
                           (np.zeros(winwidth // 2) + 1) * paddata[-1]))  # extend data to reduce convolution error at beginning and end
+=======
+                          (np.zeros(winwidth // 2) + 1) * paddata[-1]))
+    # extend data to reduce convolution error at beginning and end
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     sdata_ext = convolve(data_ext, window)  # convolute with window
     sdata = sdata_ext[winwidth + 1: -winwidth - 1]  # cut to data length
@@ -186,6 +221,10 @@ def downsamp(t, data, fac, method='step'):
     method is step by default but mean can be used (by main function before starting, for example)
     Original location: main/util/downsamp.m
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     def meansamp(a, fac):
         extrabit = np.mod(len(a), fac)
         if extrabit > 0:
@@ -210,12 +249,20 @@ def time_idx(time, time0):
     Original location: main/util/time_idx.m
     """
     if not isinstance(time, np.ndarray):
+<<<<<<< HEAD
         time = npa(time)
+=======
+        time = np.array(time)
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     idx = np.flatnonzero(time >= time0)
     if len(idx) > 0:
         idx = np.min(idx)
         time0_adj = time[idx]
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         # check if there is a closer idex before
         if not time0_adj == time[0]:
             time0_adjbefore = time[idx - 1]
@@ -241,4 +288,8 @@ def genTimeVector(conductance, srate):
     """
     Given a conductance vector, return its corresponding time vector representing seconds at each timepoint
     """
+<<<<<<< HEAD
     return genTime(len(conductance) / srate, len(conductance))
+=======
+    return genTime(len(conductance) / srate, len(conductance))
+>>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781

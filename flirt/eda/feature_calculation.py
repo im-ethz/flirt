@@ -73,7 +73,8 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     # advance by window_step_size * data_frequency
     inputs = trange(0, len(data) - 1, 
             int(window_step_size * data_frequency), desc="EDA features")
-    
+            
+
     # Get features
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(delayed(__get_features_per_window)(phasic_data, tonic_data, window_length=window_length,
