@@ -1,7 +1,6 @@
 """
 Ledalab analysis functions (original folder: Ledalab/analyze)
 """
-<<<<<<< HEAD
 from __future__ import division
 import numpy as np
 from numpy import array as npa
@@ -13,15 +12,6 @@ from scipy.linalg import norm
 from ...models.ledalab import leda2
 from ...models.ledalab import utils
 
-=======
-import numpy as np
-import math
-from scipy import stats, interpolate
-from scipy.signal import convolve
-from scipy.linalg import norm
-from . import leda2
-from . import utils
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 
 def cgd(start_val, error_fcn, h, crit_error, crit_iter, crit_h):
@@ -30,13 +20,8 @@ def cgd(start_val, error_fcn, h, crit_error, crit_iter, crit_h):
     """
     x = start_val
     (newerror, _0) = error_fcn(x)
-<<<<<<< HEAD
     error = npa(newerror)
     h = npa(h)
-=======
-    error = np.array(newerror)
-    h = np.array(h)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     jiter = 0
 
     while True:
@@ -81,11 +66,7 @@ def cgd_get_gradient(x, error0, error_fcn, h):
     gradient = np.zeros(Npars)
 
     for i in range(Npars):
-<<<<<<< HEAD
         xc = npa(x)
-=======
-        xc = np.array(x)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         xc[i] = xc[i] + h[i]
 
         (error1, _0) = error_fcn(xc)
@@ -94,11 +75,7 @@ def cgd_get_gradient(x, error0, error_fcn, h):
             gradient[i] = (error1 - error0)
 
         else:  # try opposite direction
-<<<<<<< HEAD
             xc = npa(x)
-=======
-            xc = np.array(x)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
             xc[i] = xc[i] - h[i]
             (error1, _0) = error_fcn(xc)
 
@@ -126,38 +103,22 @@ def succnz(data, crit, fac, sr):
         nzidx = np.hstack((1, nzidx))
 
     if abovecrit[-1] == 1:
-<<<<<<< HEAD
         nzidx = np.hstack((nzidx, n+1))
-=======
-        nzidx = np.hstack((nzidx, n + 1))
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     nzL = nzidx[np.arange(1, len(nzidx), 2)] - nzidx[np.arange(0, len(nzidx), 2)]
 
     return np.sum(pow(nzL / sr, fac) / (n / sr))
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 def cgd_linesearch(x, error0, direction, error_fcn, h):
     """
     Original location: analyze/cg/cgd_linesearch
     """
     direction_n = direction / norm(direction, 2)
-<<<<<<< HEAD
     error_list = npa(error0)
     stepsize = h
     maxSteps = 6
     count = 0
     factor = npa([0])
-=======
-    error_list = np.array(error0)
-    stepsize = h
-    maxSteps = 6
-    count = 0
-    factor = np.array([0])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     for iStep in range(1, maxSteps):
 
         factor = np.hstack((factor, pow(2, (iStep - 1))))
@@ -168,13 +129,8 @@ def cgd_linesearch(x, error0, direction, error_fcn, h):
         if error_list[-1] >= error_list[-2]:  # end of decline
             if iStep == 1:  # no success
                 step = 0
-<<<<<<< HEAD
                 error1 = npa(error0)
                 
-=======
-                error1 = np.array(error0)
-
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
             else:  # parabolic
                 p = np.polyfit(factor, error_list, 2)
                 fx = np.arange(factor[0], factor[-1] + .1, .1)
@@ -187,11 +143,7 @@ def cgd_linesearch(x, error0, direction, error_fcn, h):
                 if error1 < error_list[iStep - 1]:
                     xc = xcm
                     step = fxm
-<<<<<<< HEAD
                     
-=======
-
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
                 else:  # finding Minimum did not work
                     xc = x + (direction_n * stepsize) * factor[iStep - 1]  # before last point
                     (error1, xc) = error_fcn(xc)  # recalculate error in order to check for limits again
@@ -211,19 +163,11 @@ def segment_driver(data, remd, ndiff, sigc, segmWidth):
     """
     """
     SKIPPING SINCE UNUSED
-<<<<<<< HEAD
     segmOnset = npa([])
     segmImpulse = list()
     segmOversh = list()
     impMin = npa([])
     impMax = npa([])
-=======
-    segmOnset = np.array([])
-    segmImpulse = list()
-    segmOversh = list()
-    impMin = np.array([])
-    impMax = np.array([])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     """
 
     (cccrimin, cccrimax) = utils.get_peaks(data)
@@ -242,11 +186,7 @@ def segment_driver(data, remd, ndiff, sigc, segmWidth):
         segm_end = np.minimum(segm_start + segmWidth - 1, len(data))
         # impulse
         segm_idx = range(int(segm_start), int(segm_end))
-<<<<<<< HEAD
         segm_data = npa(data[segm_idx])
-=======
-        segm_data = np.array(data[segm_idx])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         segm_idx_above = np.nonzero(segm_idx >= minL[i, 1])
         segm_data[segm_idx_above] = 0
         segmOnset = np.hstack((segmOnset, segm_start))
@@ -263,11 +203,7 @@ def segment_driver(data, remd, ndiff, sigc, segmWidth):
                 rmi = np.flatnonzero(np.logical_and(rmdimax > maxL[i], rmdimax < maxL[i + 1]))
             else:
                 rmi = np.flatnonzero(rmdimax > maxL[i])
-<<<<<<< HEAD
             rmdimaxs = npa(rmdimax)
-=======
-            rmdimaxs = np.array(rmdimax)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
             if rmdimin is not None:
                 rmdimins = np.hstack((rmdimin[:-1], rmdimin[1:]))
         if rmi.size > 0:
@@ -305,11 +241,7 @@ def bateman(time, onset, amp, tau1, tau2):
     time must be a numpy array
     """
     if not isinstance(time, np.ndarray):
-<<<<<<< HEAD
         time = npa(time)
-=======
-        time = np.array(time)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     if tau1 < 0 or tau2 < 0:
         raise ValueError('tau1 or tau2 < 0: ({:f}, {:f})'.format(tau1, tau2))
 
@@ -348,7 +280,6 @@ def bateman_gauss(time, onset, amp, tau1, tau2, sigma):
     if sigma > 0:
         sr = round(1 / np.mean(np.diff(time)))
         winwidth2 = int(np.ceil(sr * sigma * 4))  # round half winwidth: 4 SD to each side
-<<<<<<< HEAD
         t = np.arange(1, (winwidth2 * 2 + 2))  # odd number (2*winwidth-half+1) + 2 because of numpy's arange implementation
         g = stats.norm.pdf(t, winwidth2 + 1, sigma * sr)
         g = g / np.max(g) * amp
@@ -356,18 +287,6 @@ def bateman_gauss(time, onset, amp, tau1, tau2, sigma):
         
         component = bg[(winwidth2 * 2): -winwidth2 * 2]
     
-=======
-        t = np.arange(1, (
-                    winwidth2 * 2 + 2))  # odd number (2*winwidth-half+1) + 2 because of numpy's arange implementation
-        g = stats.norm.pdf(t, winwidth2 + 1, sigma * sr)
-        g = g / np.max(g) * amp
-        bg = convolve(
-            np.hstack(((np.zeros(winwidth2) + 1) * component[0], component, (np.zeros(winwidth2) + 1) * component[-1])),
-            g)
-
-        component = bg[(winwidth2 * 2): -winwidth2 * 2]
-
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     return component
 
 
@@ -395,11 +314,7 @@ def sdeco_interimpulsefit(driver, kernel, minL, maxL):
     nKernel = len(kernel)
 
     # Get inter-impulse data index
-<<<<<<< HEAD
     iif_idx = npa([])
-=======
-    iif_idx = np.array([])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     if len(maxL) > 2:
         for i in range(len(maxL) - 1):
             gap_idx = np.arange(minL[i, 1], minL[i + 1, 0])
@@ -419,11 +334,7 @@ def sdeco_interimpulsefit(driver, kernel, minL, maxL):
     if tonicGridSize < 30:
         tonicGridSize = tonicGridSize * 2
 
-<<<<<<< HEAD
     groundlevel = npa([])
-=======
-    groundlevel = np.array([])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     for i in range(len(groundtime)):
         # Select relevant interimpulse time points for tonic estimate at groundtime
         if i == 0:
@@ -433,7 +344,6 @@ def sdeco_interimpulsefit(driver, kernel, minL, maxL):
             t_idx = np.logical_and(iif_t > groundtime[i] - tonicGridSize, iif_t < t[-1] - 1)
             grid_idx = np.logical_and(t > groundtime[i] - tonicGridSize, t < t[-1] - 1)
         else:
-<<<<<<< HEAD
             t_idx = np.logical_and(iif_t > groundtime[i] - tonicGridSize / 2, iif_t <= groundtime[i] + tonicGridSize / 2)
             grid_idx = np.logical_and(t > groundtime[i] - tonicGridSize / 2, t <= groundtime[i] + tonicGridSize / 2)
         # Estimate groundlevel at groundtime
@@ -442,19 +352,6 @@ def sdeco_interimpulsefit(driver, kernel, minL, maxL):
         else:  # if no inter-impulses data is available ...
             groundlevel = np.hstack((groundlevel, (np.minimum(np.median(driver[grid_idx]), d[utils.time_idx(t, groundtime[i])]))))
     
-=======
-            t_idx = np.logical_and(iif_t > groundtime[i] - tonicGridSize / 2,
-                                   iif_t <= groundtime[i] + tonicGridSize / 2)
-            grid_idx = np.logical_and(t > groundtime[i] - tonicGridSize / 2, t <= groundtime[i] + tonicGridSize / 2)
-        # Estimate groundlevel at groundtime
-        if len(np.flatnonzero(t_idx)) > 2:
-            groundlevel = np.hstack(
-                (groundlevel, (np.minimum(np.mean(iif_data[t_idx]), d[utils.time_idx(t, groundtime[i])]))))
-        else:  # if no inter-impulses data is available ...
-            groundlevel = np.hstack(
-                (groundlevel, (np.minimum(np.median(driver[grid_idx]), d[utils.time_idx(t, groundtime[i])]))))
-
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
     # matlab: d = pchip(x,y,t)
     # python:
     # p = interpolate.PchipInterpolator(x,y)
@@ -509,11 +406,7 @@ def signpeak(data, cccrimin, cccrimax, sigc):
 
     dmm = np.vstack((data[cccrimax] - data[cccrimin[:-1]],
                      data[cccrimax] - data[cccrimin[1:]]))
-<<<<<<< HEAD
     maxL = npa(cccrimax[np.max(dmm, axis=0) > sigc])
-=======
-    maxL = np.array(cccrimax[np.max(dmm, axis=0) > sigc])
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
     # keep only minima right before and after sign maxima
     minL = None
@@ -526,8 +419,4 @@ def signpeak(data, cccrimin, cccrimax, sigc):
             minL = newStack
         else:
             minL = np.vstack((minL, newStack))
-<<<<<<< HEAD
     return (minL, maxL)
-=======
-    return (minL, maxL)
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
