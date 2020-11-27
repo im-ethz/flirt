@@ -25,11 +25,6 @@ from .temp import get_temp_features
 from .stats import get_stat_features
 
 # extra sub-packages
-<<<<<<< HEAD
 #from .simple import get_features_for_empatica_archive
 from flirt.reader import empatica
 #import flirt.with_
-=======
-# flirt.simple
-# flirt.reader
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
