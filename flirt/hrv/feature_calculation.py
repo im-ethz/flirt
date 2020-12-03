@@ -101,6 +101,10 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
         # print("Not cleaning data")
         clean_data = data.copy()
 
+    # ensure we have a DatetimeIndex, needed for interpolation
+    if not isinstance(clean_data.index, pd.DatetimeIndex):
+        clean_data.index = pd.DatetimeIndex(clean_data.index)
+
     calculated_features = {}
 
     with Parallel(n_jobs=num_cores) as parallel:

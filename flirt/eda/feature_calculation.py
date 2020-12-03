@@ -42,15 +42,21 @@ def get_eda_features(data: pd.Series, window_length: int = 60, window_step_size:
     >>> acc_features = flirt.get_eda_features(eda['eda'], 180, 1)
     """
 
+    input_data = data.copy()
+
+    # ensure we have a DatetimeIndex, needed for calculation
+    if not isinstance(input_data.index, pd.DatetimeIndex):
+        input_data.index = pd.DatetimeIndex(input_data.index)
+
     # use only every nth value
-    inputs = trange(0, len(data) - 1, window_step_size * data_frequency, desc="EDA features")
+    inputs = trange(0, len(input_data) - 1, window_step_size * data_frequency, desc="EDA features")
 
     if not num_cores >= 1:
         num_cores = multiprocessing.cpu_count()
 
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(
-            delayed(__get_scr_scl)(data, window_length=window_length, data_frequency=data_frequency, i=k) for k in
+            delayed(__get_scr_scl)(input_data, window_length=window_length, data_frequency=data_frequency, i=k) for k in
             inputs)
 
     results = pd.DataFrame(list(filter(None, results)))
