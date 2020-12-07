@@ -6,7 +6,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 
-from .preprocessing import data_utils, CvxEda, LowPassFilter, ComputePeaks, LedaLab, ExtendedKalmanFilter, MitExplorerDetector, MultiStepPipeline, LrDetector
+from .preprocessing import data_utils, CvxEda, LowPassFilter, ComputeMITPeaks, ComputeNeurokitPeaks, LedaLab, ExtendedKalmanFilter, MitExplorerDetector, MultiStepPipeline, LrDetector
 from ..stats.common import get_stats
 from .preprocessing import get_MFCC_stats, get_fd_stats
 
@@ -15,7 +15,7 @@ from .preprocessing import get_MFCC_stats, get_fd_stats
 def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: float = 1.0, num_cores=2,
                      preprocessor: data_utils.Preprocessor = LowPassFilter(),
                      signal_decomposition: data_utils.SignalDecomposition = CvxEda(),
-                     scr_features: data_utils.PeakFeatures = ComputePeaks()):
+                     scr_features: data_utils.PeakFeatures = ComputeMITPeaks()):
     """
     This function computes several statistical and entropy-based features for the phasic and tonic components of the EDA signal.
 
@@ -90,7 +90,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
 
 def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, window_length: int, i: int,
                               sampling_frequency: int = 4,
-                               __compute_peak_features: data_utils.PeakFeatures = ComputePeaks()):
+                               __compute_peak_features: data_utils.PeakFeatures = ComputeMITPeaks()):
 
     if pd.Timedelta(phasic_data.index[i + 1] - phasic_data.index[i]).total_seconds() <= window_length:
         min_timestamp = phasic_data.index[i]

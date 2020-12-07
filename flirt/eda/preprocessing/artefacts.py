@@ -137,7 +137,7 @@ class MitExplorerDetector(ArtefactsDetection):
         eda = data
         eda_len = len(eda)
         datetime = eda.index
-        eda = np.array(eda).reshape(eda_len)
+        #eda = np.array(eda).reshape(eda_len)
         fs = self.sampling_frequency
         t = np.linspace(0, eda_len / fs, eda_len, endpoint=False)
 
@@ -149,15 +149,15 @@ class MitExplorerDetector(ArtefactsDetection):
         scale = 1.0
         window = 5
 
-        for i in range(0, len(labels) - 1):
+        for i in range(0, len(labels)-1):
             if (labels_multi[i] == -1 or labels_binary[i] == -1) and i > 0:
                 start = int(i * fs * window)
                 end = int(start + fs * window)
-                eda.loc[start:end] = np.nan
-
+                eda.iloc[start:end] = np.nan
+        
         # Creating dataframe
-        artifact_free_eda = pd.Series(eda[:eda_len], index=datetime[:eda_len])
-        artifact_free_eda = artifact_free_eda.interpolate(method='linear')
+        artifact_free_eda = pd.Series(list(eda.values), index=datetime)
+        artifact_free_eda = artifact_free_eda.interpolate(method='linear', limit_direction='forward')
 
         # print('- Artifaction detection and removal using SVM completed')
 

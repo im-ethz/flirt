@@ -268,7 +268,6 @@ def eda_explorer_artifact(filepath, sensor: str = 'e4'):
     featureLabels.rename(columns={'index': 'StartTime'}, inplace=True)
     featureLabels['EndTime'] = featureLabels['StartTime'] + datetime.timedelta(seconds=5)
     featureLabels.index.name = 'EpochNum'
-
     cols = ['StartTime', 'EndTime']
     cols.extend(classifierList)
 

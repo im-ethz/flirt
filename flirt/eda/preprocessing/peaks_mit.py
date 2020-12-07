@@ -3,7 +3,7 @@ import pandas as pd
 
 from .data_utils import PeakFeatures
 
-class ComputePeaks(PeakFeatures):
+class ComputeMITPeaks(PeakFeatures):
 
     """
     This function computes the peaks features for the relevant phasic data in the EDA signal. 

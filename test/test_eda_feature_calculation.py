@@ -1,12 +1,4 @@
 import unittest
-<<<<<<< HEAD
-from datetime import datetime
-
-import pandas as pd
-import numpy as np
-
-=======
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 import flirt
 import flirt.reader.empatica
@@ -32,12 +24,8 @@ class EmpaticaEdaTestCase(unittest.TestCase):
         eda = flirt.reader.empatica.read_eda_file_into_df('wearable-data/empatica/EDA.csv')
         # Using EDAexplorer Artifact Detection (svm->interpolation->low-pass filter->cvx->features)
         eda_features_svm = flirt.get_eda_features(data=eda['eda'], window_length=60, window_step_size=1, num_cores=2,
-<<<<<<< HEAD
-                                                  preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.MitExplorerDetector(filepath)))
-=======
                                                   preprocessor=eda_preprocess.MultiStepPipeline(
                                                       eda_preprocess.MitExplorerDetector(filepath)))
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         self.assertEqual(2500, len(eda_features_svm))
 
     
@@ -45,12 +33,8 @@ class EmpaticaEdaTestCase(unittest.TestCase):
         eda = flirt.reader.empatica.read_eda_file_into_df('wearable-data/empatica/EDA.csv')
         # Using Media Lab UT Artifact Detection (lr->interpolation->low-pass filter->cvx->features)
         eda_features_lr = flirt.get_eda_features(data=eda['eda'], window_length=60, window_step_size=1, num_cores=2,
-<<<<<<< HEAD
-                                                 preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.LrDetector()))
-=======
                                                  preprocessor=eda_preprocess.MultiStepPipeline(
                                                      eda_preprocess.LrDetector()))
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
         self.assertEqual(2500, len(eda_features_lr))
 
     

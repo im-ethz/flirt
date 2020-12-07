@@ -3,7 +3,8 @@ from .cvxeda import CvxEda
 from .ekf import ExtendedKalmanFilter
 from .low_pass import LowPassFilter
 from .pipeline import MultiStepPipeline
-from .peak_features import ComputePeaks
+from .peaks_mit import ComputeMITPeaks
+from .peaks_neurokit import ComputeNeurokitPeaks
 from .ledalab import LedaLab
 from .fd_stats import get_fd_stats
 from .MFCC_stats import get_MFCC_stats
@@ -14,7 +15,8 @@ __all__ = [
     "LowPassFilter",
     "LrDetector",
     "MitExplorerDetector",
-    "ComputePeaks",
+    "ComputeMITPeaks",
+    "ComputeNeurokitPeaks",
     "LedaLab",
     "get_fd_stats",
     "get_MFCC_stats",

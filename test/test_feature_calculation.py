@@ -10,7 +10,6 @@ import flirt.reader.empatica
 import flirt.reader.holter
 import flirt.stats
 import flirt.eda.preprocessing as eda_preprocess
-<<<<<<< HEAD
 
 
 class EmpaticaEdaTestCase(unittest.TestCase):
@@ -37,8 +36,6 @@ class EmpaticaEdaTestCase(unittest.TestCase):
 
         self.assertEqual(2500, len(eda))
 
-=======
->>>>>>> 08d4c0758bb4dee57ba7f337632b77eec417a781
 
 class EmpaticaAccTestCase(unittest.TestCase):
     def test_load_data(self):

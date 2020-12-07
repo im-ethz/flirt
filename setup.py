@@ -36,8 +36,8 @@ requirements = [
     "astropy", 
     "sympy",
     "glob2",
-    "os",
-    "lightgbm"
+    "lightgbm",
+    "pwt"
 ]
 
 extras_require = {

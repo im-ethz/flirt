@@ -3,6 +3,7 @@ import numpy as np
 
 import matplotlib; matplotlib.use('agg')
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import multiprocessing
 from joblib import Parallel, delayed
@@ -10,7 +11,7 @@ from tqdm.autonotebook import trange
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, matthews_corrcoef
 from sklearn import utils, model_selection, metrics
 
 from datetime import datetime, timedelta
@@ -27,11 +28,11 @@ def get_features_per_subject(path, window_length):
     features = flirt.simple.get_features_for_empatica_archive(zip_file_path = path,
                                       window_length = window_length,
                                       window_step_size = 0.25,
-                                      hrv_features = True,
+                                      hrv_features = False,
                                       eda_features = True,
-                                      acc_features = True,
-                                      bvp_features = True,
-                                      temp_features = True,
+                                      acc_features = False,
+                                      bvp_features = False,
+                                      temp_features = False,
                                       debug = True)
     return features
 
@@ -161,18 +162,66 @@ def main():
     return df_all
 
 if __name__ == '__main__':
-    df_all = main()
-    df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lr_0_1_feat.csv')
-    df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lr_0_1_feat.csv')
+    #df_all = main()
+    #df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
+    df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_eda_ekf_cvx_Newlabel.csv')
+    #df_eda = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
     df_all.set_index('timedata', inplace=True)
-    print(df_all.ID)
+    df_all = df_all.loc[:, ~df_all.columns.str.startswith('hrv')]
+    #df_eda.set_index('timedata', inplace=True)
+    #df_eda = df_eda.drop(columns=['label', 'ID'])
+    #df_all = df_all.loc[:, ~df_all.columns.str.startswith('eda')]
+    #df_all = pd.concat([df_all, df_eda], axis=1)
+    #df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lrLeda_feat.csv')
+    print(df_all)
     
+    df_corr = df_all.loc[df_all['ID']=='S9']
+    print(df_corr.columns)
+    columns = ['ID', 'eda_phasic_mean', 'eda_peaks_p', 'eda_auc_p_s', 'eda_phasic_mfcc_mean','eda_tonic_mean', 'eda_tonic_min',
+                            'eda_tonic_pct_5', 'eda_tonic_mfcc_mean', 'acc_acc_x_mean', 'acc_acc_x_kurtosis', 'acc_acc_x_iqr_5_95'
+                            , 'acc_acc_y_max', 'acc_acc_y_energy', 'acc_acc_y_rms', 'acc_acc_z_skewness', 'bvp_svd_entropy',
+                            'bvp_n_sign_changes', 'temp_mean', 'temp_min', 'temp_pct_5', 'label']
+                            
+    df_corr = df_corr.loc[:, columns]
+    print(df_corr)
+    df_corr = df_corr.replace([np.inf, -np.inf], np.nan)
+    df_corr = df_corr.dropna(axis=1)
+    df_corr = df_corr.corr('kendall')
+    print(df_corr)
+
+    # get most correlated variables
+    cor_target = abs(df_corr["label"])
+    relevant_features = cor_target[cor_target>=0.45]
+    print('relevant features', relevant_features)
+
+    plt.rcParams['figure.figsize'] = (20.0, 10.0)
+    plt.rcParams['font.family'] = "serif"   
+    plt.figure()
+    sns.heatmap(df_corr, annot=True, fmt=".1f", cmap='coolwarm', vmin=-1, vmax=1, annot_kws={'size':10})
+    #sns.heatmap(df_corr, cmap='coolwarm', vmin=-1, vmax=1)
+    plt.tight_layout()
+    plt.savefig('/home/fefespinola/ETHZ_Fall_2020/plots/heatmap_corr.pdf', dpi=300, bbox_inches='tight')
+
+
+    '''
+    df_corr_0 = df_corr.loc[df_all['label']==0]
+    print(df_corr_0)
+    df_corr_0 = df_corr_0.corr('kendall')
+    print(df_corr_0)
+
+    df_corr_1 = df_corr.loc[df_all['label']=='1', :]
+    df_corr_1 = df_corr_1.corr(‘pearson’)
+    print(df_corr_1)
+    df_corr_2 = df_corr.loc[df_all['label']=='2', :]
+    df_corr_2 = df_corr_2.corr(‘pearson’)
+    print(df_corr_2)
+    '''
+
     ### for binary classification uncomment line below 
-    #df_all['label'].replace(2, 0, inplace=True)
-    #print('===== BINARY ====')
+    df_all['label'].replace(2, 0, inplace=True)
+    print('===== BINARY ====')
 
     print('---start classification---')
-
     df = df_all.replace([np.inf, -np.inf], np.nan) # np.inf leads to problems with some techniques
 
     # Clean columns that contain a lot of nan values 
@@ -198,8 +247,8 @@ if __name__ == '__main__':
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
         #### for binary classification uncomment line below
-        #params = {'objective': 'binary', 'is_unbalance': True}
-        params = {'objective': 'multiclass', 'is_unbalance': True}
+        params = {'objective': 'binary', 'is_unbalance': True}
+        #params = {'objective': 'multiclass', 'is_unbalance': True}
         model = lgb.LGBMClassifier(**params)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
@@ -208,6 +257,7 @@ if __name__ == '__main__':
             
         
         print(metrics.classification_report(y_test, y_pred))
+        print('MCC', matthews_corrcoef(y_test, y_pred))
 
     stats = pd.DataFrame(stats)
     print(stats.f1.mean())
