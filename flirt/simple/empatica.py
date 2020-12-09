@@ -91,7 +91,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
                 df_eda_features = flirt.eda.get_eda_features(eda_data.iloc[:, 0], window_length=window_length,
                                                              window_step_size=window_step_size,
                                                              preprocessor=eda_preprocess.ExtendedKalmanFilter(),
-                                                             signal_decomposition=eda_preprocess.LedaLab()).add_prefix('eda_')
+                                                             signal_decomposition=eda_preprocess.CvxEda(),
+                                                             scr_features=eda_preprocess.ComputeNeurokitPeaks()).add_prefix('eda_')
                                                     
 
         if acc_features:

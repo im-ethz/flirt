@@ -162,7 +162,7 @@ def main():
     return df_all
 
 if __name__ == '__main__':
-    #df_all = main()
+    df_all = main()
     #df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
     df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_eda_ekf_cvx_Newlabel.csv')
     #df_eda = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
