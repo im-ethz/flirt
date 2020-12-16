@@ -15,6 +15,7 @@ __all__ = [
     "LowPassFilter",
     "LrDetector",
     "MitExplorerDetector",
+    "MultiStepPipeline",
     "ComputeMITPeaks",
     "ComputeNeurokitPeaks",
     "LedaLab",

@@ -28,6 +28,6 @@ class SignalDecomposition(object):
 
 class PeakFeatures(object):
     @abstractmethod
-    def __process__(self, data: pd.Series) -> dict:
+    def __process__(self, data: pd.Series, mean_tonic: float) -> dict:
         raise NotImplementedError
     

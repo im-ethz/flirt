@@ -39,9 +39,9 @@ def get_peaks(data):
     Note: ndiff can only be 1 (it was the second, unused parameter of this function)
     Original location: main/util/get_peaks.m
     """
-    if not isinstance(data, np.ndarray):
-        data = np.array(data)
-        
+    
+    #if not isinstance(data, np.ndarray):
+    data = np.array(data).reshape(-1)
     cccrimin = np.array([])
     cccrimax = np.array([])
     ccd = np.diff(data)

@@ -8,47 +8,54 @@ from .data_utils import PeakFeatures
 
 class ComputeNeurokitPeaks(PeakFeatures):
 
-    """
-    This function computes the peaks features for the relevant phasic data in the EDA signal. 
+    """ This class computes the peak features for the relevant phasic data in the EDA signal using the Neurokit \
+    peak detection algorithm. """
 
-    Parameters
-    -----------
-    data : pd.Series
-        relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), one of the columns must include the EDA phasic component: `phasic`
-    sampling_frequency : int, optional
-        the frequency with which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
-    offset: int, optional
-        the number of rising samples and falling samples after a peak needed to be counted as a peak
-    start_WT: int, optional
-        maximum number of seconds before the apex of a peak that is the "start" of the peak
-    end_WT: int, optional
-        maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
-    thres: float, optional
-        the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
-          
-    Returns
-    -------
-    dict
-        dictionary containing the peak features computed on the phasic component of the EDA data (peaks_p: number of peaks, rise_time_p: average rise time of the peaks, \
-        max_deriv_p: average value of the maximum derivative, amp_p: average amplitute of the peaks, decay_time_p: average decay time of the peaks, SCR_width_p: average width of the peak (SCR), \
-        auc_p: average area under the peak)
-    
-    References
-    -----------
-    - Taylor, S., Jaques, N., Chen, W., Fedor, S., Sano, A., & Picard, R. Automatic identification of artifacts in electrodermal activity data. In Engineering in Medicine and Biology Conference. 2015.
-    - https://github.com/MITMediaLabAffectiveComputing/eda-explorer
-    """
-
-    def __init__(self, sampling_frequency: int = 4, amplitude_min=0.1, recovery_percentage=0.5):
+    def __init__(self, sampling_frequency: int = 4, amplitude_min=0.03, recovery_percentage=0.5):
+        """ Construct the model to compute peak features.
+        
+        Parameters
+        -----------
+        sampling_frequency : int, optional
+            the frequency with which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+        amplitude_min: float, optional
+            minimum threshold by which to exclude SCRs as relative to the largest amplitude in the signal
+        recovery_percentage: float, optional
+            percentage of total recovery time considered to compute decay time feature
+        """
 
         self.sampling_frequency = sampling_frequency
         self.amplitude_min = amplitude_min
         self.recovery_percentage = recovery_percentage
 
-    def __process__(self, data: pd.Series) -> dict:
+    def __process__(self, data: pd.Series, mean_tonic: float) -> dict:
+        """ Perform the peak detection and compute the relevant features.
+
+        Parameters
+        ----------
+        data : pd.Series
+            relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica)
+
+        Returns
+        -------
+        dict
+            dictionary containing the peak features computed on the phasic component of the EDA data (peaks_p: number of peaks, rise_time_p: average rise time of the peaks, \
+            max_deriv_p: average value of the maximum derivative, amp_p: average amplitute of the peaks, decay_time_p: average decay time of the peaks, SCR_width_p: average width of the peak (SCR), \
+            auc_p: average area under the peak, auc_s: total area under all peaks)
         
+        Examples
+        --------
+        >>> import flirt.reader.empatica
+        >>> import flirt.eda.preprocessing
+        >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
+        >>> peaks_features = flirt.eda.preprocessing.ComputeNeurokitPeaks().__process__(eda['eda'])
         
-        returned_peak_data = self.__find_peaks(np.array(data.values))
+        References
+        -----------
+        - Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S H Chen, A. (2020). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Retrieved March 28, 2020, from https://github.com/neuropsychology/NeuroKit
+        """
+        
+        returned_peak_data = self.__find_peaks(np.array(data.values), mean_tonic)
         
         result_df = pd.DataFrame(columns=["peaks", "amp", "max_deriv", "rise_time", "decay_time", "SCR_width", "AUC"])
         result_df['peaks'] = returned_peak_data['Peaks']
@@ -82,7 +89,7 @@ class ComputeNeurokitPeaks(PeakFeatures):
         
         return results
 
-    def __find_peaks(self, signal):
+    def __find_peaks(self, signal, mean_tonic):
 
         """Find peaks in a signal.
 
@@ -112,6 +119,8 @@ class ComputeNeurokitPeaks(PeakFeatures):
             - 'Offset' contains the offset, end (or right trough), of each peak.
 
         """
+        signal = signal/mean_tonic
+
         relative_height_min=self.amplitude_min
 
         info = self._signal_findpeaks_scipy(signal)
@@ -129,7 +138,7 @@ class ComputeNeurokitPeaks(PeakFeatures):
         info["Distance"] = self._signal_findpeaks_distances(info["Peaks"])
         info["Onsets"] = self._signal_findpeaks_findbase(info["Peaks"], signal, what="onset")
         info["Offsets"] = self._signal_findpeaks_findbase(info["Peaks"], signal, what="offset")
-        info["Glob_Height"] = signal[info["Peaks"]]
+        info["Glob_Height"] = signal[info["Peaks"]]*mean_tonic
 
         # Peaks (remove peaks with no onset)
         valid_peaks = np.logical_and(
@@ -139,8 +148,12 @@ class ComputeNeurokitPeaks(PeakFeatures):
 
         # Onsets (remove onsets with no peaks)
         valid_onsets = ~np.isnan(info["Onsets"])
-        valid_onsets[valid_onsets] = info["Onsets"][valid_onsets] < np.nanmax(info["Peaks"])
-        onsets = info["Onsets"][valid_onsets].astype(np.int)
+        
+        if valid_onsets.size > 1:
+            valid_onsets[valid_onsets] = info["Onsets"][valid_onsets] < np.nanmax(info["Peaks"])
+            onsets = info["Onsets"][valid_onsets].astype(np.int)
+        else:
+            onsets = np.array(info["Onsets"][valid_onsets].astype(np.int)).reshape(-1,)
 
         if len(onsets) != len(peaks):
             raise ValueError(
@@ -152,7 +165,7 @@ class ComputeNeurokitPeaks(PeakFeatures):
 
         # Amplitudes
         amplitude = np.full(len(info["Glob_Height"]), np.nan)
-        amplitude[valid_peaks] = info["Glob_Height"][valid_peaks] - signal[onsets]
+        amplitude[valid_peaks] = info["Glob_Height"][valid_peaks] - signal[onsets]*mean_tonic
 
         # Rise times
         risetime = np.full(len(info["Peaks"]), np.nan)
@@ -167,14 +180,14 @@ class ComputeNeurokitPeaks(PeakFeatures):
         # (Half) Recovery times
         recovery = np.full(len(info["Peaks"]), np.nan)
         recovery_time = np.full(len(info["Peaks"]), np.nan)
-        recovery_values = signal[onsets] + (amplitude[valid_peaks] * self.recovery_percentage)
+        recovery_values = signal[onsets]*mean_tonic + (amplitude[valid_peaks] * self.recovery_percentage)
 
         for i, peak_index in enumerate(peaks):
             # Get segment between peak and next peak
             try:
-                segment = signal[peak_index : peaks[i + 1]]
+                segment = signal[peak_index : peaks[i + 1]]*mean_tonic
             except IndexError:
-                segment = signal[peak_index::]
+                segment = signal[peak_index::]*mean_tonic
 
             # Adjust segment (cut when it reaches minimum to avoid picking out values on the rise of the next peak)
             segment = segment[0 : np.argmin(segment)]
@@ -192,7 +205,7 @@ class ComputeNeurokitPeaks(PeakFeatures):
         info["Recovery"] = recovery
         info["RecoveryTime"] = recovery_time
 
-        eda_deriv = signal[1:] - signal[:-1]
+        eda_deriv = signal[1:]*mean_tonic - signal[:-1]*mean_tonic
         max_deriv = []
         for i in info['Peaks']:
             temp_start = max(0, i - self.sampling_frequency)

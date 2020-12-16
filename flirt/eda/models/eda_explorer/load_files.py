@@ -121,7 +121,7 @@ def loadData_E4(filepath):
     # Load EDA data
     eda_data = _loadSingleFile_E4(os.path.join(filepath, 'EDA.csv'), ["EDA"], 4, "250L")
     # Get the filtered data using a low-pass butterworth filter (cutoff:1hz, fs:8hz, order:6)
-    eda_data['filtered_eda'] = butter_lowpass_filter(eda_data['EDA'], 0.1, 8, 1)
+    eda_data['filtered_eda'] = butter_lowpass_filter(eda_data['EDA'], 0.5, 8, 1)
 
     # Load ACC data
     #acc_data = _loadSingleFile_E4(os.path.join(filepath, 'ACC.csv'), ["AccelX", "AccelY", "AccelZ"], 32, "31250U")

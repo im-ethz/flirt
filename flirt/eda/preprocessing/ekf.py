@@ -6,55 +6,33 @@ from .data_utils import Preprocessor
 
 
 class ExtendedKalmanFilter(Preprocessor):
-    """
-    This class filters the raw EDA data using an Extended Kalman Filter, reducing the measurement noise and eliminating motion artifacts. 
-    
-    Parameters
-    -----------
-    data : pd.Series
-        raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
-    sampling_frequency : int, optional
-        the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
-    alpha : float, optional
-        sudomotor nerve activation (S) response amplitude
-    d_min : float, optional
-        lowest rate of change for a probable sudomotor response
-    d_max : float, optional
-        the limit where all higher rates of changes are probably due to artifacts or noise
-    min_diff : float, optional
-        minimum absolute difference between two consecutive EDA measurements
-    max_diff : float, optional
-        maximum absolute difference between two consecutive EDA measurements
-    min_Savi_Go : float, optional
-        minimum Savitsky-Golay differential
-    max_Savi_Go : float, optional
-        maximum Savitsky-Golay differential
-
-    Returns
-    -------
-    pd.Series
-        series containing the filtered EDA signal using the Extended Kalman filter algorithm
-
-    Notes
-    ------
-    - Decreasing `alpha` tends to filter out more of the noise and reduce the phasic amplitude response.
-    - Increasing the gap between `min_diff` and `max_diff`, and between `min_Savi_Go` and `max_Savi_Go`, reduces the amount of artifact supression. 
-
-    Examples
-    --------
-    >>> import flirt.reader.empatica
-    >>> import flirt.eda
-    >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
-    >>> eda_filtered_ekf = flirt.eda.preprocessing.ExtendedKalmanFilter(sampling_frequency=4).__process__(eda['eda'])
-    
-    References
-    ----------
-    - Tronstad C, Staal OM, Saelid S, Martinsen OG. Model-based filtering for artifact and noise suppression with state estimation for electrodermal activity measurements in real time. Annu Int Conf IEEE Eng Med Biol Soc. 2015 Aug.
-    
+    """ This class filters the raw EDA data using an Extended Kalman Filter, reducing the measurement noise and eliminating motion artifacts. 
     """
 
-    def __init__(self, sampling_frequency: int = 4, alpha: float = 20.0, d_min: float = 0.001, d_max: float = 0.1,
-                 min_diff: float = 0.0, max_diff: float = 0.05, min_Savi_Go: float = -0.01, max_Savi_Go: float = 0.01):
+    def __init__(self, sampling_frequency: int = 4, alpha: float = 31.0, d_min: float = 0.005, d_max: float = 0.5,
+                 min_diff: float = 0.001, max_diff: float = 0.1, min_Savi_Go: float = -0.03, max_Savi_Go: float = 0.03):
+        """ Consruct the Extended Kalman filtering model.
+
+        Parameters
+        -----------
+        sampling_frequency : int, optional
+            the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+        alpha : float, optional
+            sudomotor nerve activation (S) response amplitude
+        d_min : float, optional
+            lowest rate of change for a probable sudomotor response
+        d_max : float, optional
+            the limit where all higher rates of changes are probably due to artifacts or noise
+        min_diff : float, optional
+            minimum absolute difference between two consecutive EDA measurements
+        max_diff : float, optional
+            maximum absolute difference between two consecutive EDA measurements
+        min_Savi_Go : float, optional
+            minimum Savitsky-Golay differential
+        max_Savi_Go : float, optional
+            maximum Savitsky-Golay differential
+        """
+
         self.sampling_frequency = sampling_frequency
         self.alpha = alpha
         self.d_min = d_min
@@ -65,6 +43,35 @@ class ExtendedKalmanFilter(Preprocessor):
         self.max_Savi_Go = max_Savi_Go
 
     def __process__(self, data: pd.Series) -> pd.Series:
+        """ Perform the signal filtering.
+
+        Parameters
+        ----------
+        data : pd.Series
+            raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
+
+        Returns
+        -------
+        pd.Series
+            series containing the filtered EDA signal using the Extended Kalman filter algorithm
+
+        Notes
+        ------
+        - Increasing `alpha` tends to filter out more of the noise and reduce the phasic amplitude response.
+        - Increasing the gap between `min_diff` and `max_diff`, and between `min_Savi_Go` and `max_Savi_Go`, reduces the amount of artifact supression. 
+
+        Examples
+        --------
+        >>> import flirt.reader.empatica
+        >>> import flirt.eda
+        >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
+        >>> eda_filtered_ekf = flirt.eda.preprocessing.ExtendedKalmanFilter(sampling_frequency=4).__process__(eda['eda'])
+        
+        References
+        ----------
+        - Tronstad C, Staal OM, Saelid S, Martinsen OG. Model-based filtering for artifact and noise suppression with state estimation for electrodermal activity measurements in real time. Annu Int Conf IEEE Eng Med Biol Soc. 2015 Aug.
+        """
+
         eda = np.ravel(data)
         eda_len = len(eda)
         fs = self.sampling_frequency

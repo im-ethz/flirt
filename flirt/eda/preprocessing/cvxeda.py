@@ -7,56 +7,33 @@ from .low_pass import LowPassFilter
 
 
 class CvxEda(SignalDecomposition):
-    """
-    Decompose Electrodermal Activity (EDA) into Phasic and Tonic components.
+    """ This class decomposes the filtered EDA signal into tonic and phasic components using the cvxEDA algorithm. It also \
+    ensures that the tonic and phasic signals never drops below zero. """
 
-    This class decomposes the filtered EDA signal into tonic and phasic components using the cvxEDA algorithm. It also \
-    ensures that the tonic and phasic signals never drops below zero.
-    
-    Parameters
-    -----------
-    data : pd.Series
-        raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
-        column is the raw eda data: `eda`
-    sampling_frequency : int, optional
-        the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
-    tau0: float, optional
-        slow time constant of the Bateman function
-    tau1: float, optional 
-        fast time constant of the Bateman function
-    delta_knot: float, optional
-        time between knots of the tonic spline function
-    cvx_alpha: float, optional 
-        penalization for the sparse SMNA driver
-    gamma: float, optional
-        penalization for the tonic spline coefficients
-    solver: optional
-        sparse QP solver to be used, see cvxopt.solvers.qp
-    options: dic, optional
-        solver options, see: http://cvxopt.org/userguide/coneprog.html#algorithm-parameters       
-
-    Returns
-    -------
-    pd.Series, pd.Series
-        two dataframe including the phasic and the tonic components, index is a list of \
-        timestamps for both dataframes
-
-    Examples
-    --------
-    >>> import flirt.reader.empatica
-    >>> import flirt.eda
-    >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
-    >>> phasic, tonic = flirt.eda.preprocessing.CvxEda().__process__(eda['eda'])
-    
-    References
-    ----------
-    - A. Greco, G. Valenza, A. Lanata, E. P. Scilingo and L. Citi. cvxEDA: A Convex Optimization Approach to Electrodermal Activity Processing. IEEE Transactions on Biomedical Engineering. April 2016.
-    - https://github.com/lciti/cvxEDA
-    """
-
-    def __init__(self, sampling_frequency: int = 4, tau0: float = 2., tau1: float = 0.7, delta_knot: float = 10.,
-                 cvx_alpha: float = 8e-4, gamma: float = 1e-2, solver=None,
+    def __init__(self, sampling_frequency: int = 4, tau0: float = 2., tau1: float = 0.7, delta_knot: float = 15.,
+                 cvx_alpha: float = 8e-3, gamma: float = 1e-3, solver=None,
                  options={'reltol': 1e-9, 'show_progress': False}):
+        """ Construct the signal decomposition model.
+
+        Parameters
+        -----------
+        sampling_frequency : int, optional
+            the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+        tau0: float, optional
+            slow time constant of the Bateman function
+        tau1: float, optional 
+            fast time constant of the Bateman function
+        delta_knot: float, optional
+            time between knots of the tonic spline function
+        cvx_alpha: float, optional 
+            penalization for the sparse SMNA driver
+        gamma: float, optional
+            penalization for the tonic spline coefficients
+        solver: optional
+            sparse QP solver to be used.
+        options: dic, optional
+            solver options, see: http://cvxopt.org/userguide/coneprog.html#algorithm-parameters
+        """    
 
         self.sampling_frequency = sampling_frequency
         self.tau0 = tau0
@@ -68,6 +45,33 @@ class CvxEda(SignalDecomposition):
         self.options = options
 
     def __process__(self, data: pd.Series) -> (pd.Series, pd.Series):
+        """Decompose electrodermal activity into phasic and tonic components.
+
+        Parameters
+        -----------
+        data : pd.Series
+            filtered EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
+            column is the filtered eda data: `eda`
+
+        Returns
+        -------
+        pd.Series, pd.Series
+            two dataframe including the phasic and the tonic components, index is a list of \
+            timestamps for both dataframes
+
+        Examples
+        --------
+        >>> import flirt.reader.empatica
+        >>> import flirt.eda
+        >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
+        >>> phasic, tonic = flirt.eda.preprocessing.CvxEda().__process__(eda['eda'])
+        
+        References
+        ----------
+        - A. Greco, G. Valenza, A. Lanata, E. P. Scilingo and L. Citi. cvxEDA: A Convex Optimization Approach to Electrodermal Activity Processing. IEEE Transactions on Biomedical Engineering. April 2016.
+        - https://github.com/lciti/cvxEDA
+        """
+
         # Decompose data into tonic and phasic components
         phasic, tonic = self.__cvx_eda(data.values, 1 / self.sampling_frequency, self.tau0, self.tau1,
                                        self.delta_knot, self.cvx_alpha, self.gamma, self.solver, self.options)

@@ -294,12 +294,20 @@ def trough2peak_analysis():
     ds = leda2.data.conductance_smoothData
     t = leda2.data.time_data
     (minL, maxL) = utils.get_peaks(ds)
-    minL = minL[:len(maxL)]
-    leda2.trough2peakAnalysis.onset = t[minL]
-    leda2.trough2peakAnalysis.peaktime = t[maxL]
-    leda2.trough2peakAnalysis.onset_idx = minL
-    leda2.trough2peakAnalysis.peaktime_idx = maxL
-    leda2.trough2peakAnalysis.amp = ds[maxL] - ds[minL]
+    
+    if (not isinstance(minL, type(None))) & (not isinstance(maxL, type(None))):
+        minL = minL[:len(maxL)]
+        leda2.trough2peakAnalysis.onset = t[minL]
+        leda2.trough2peakAnalysis.peaktime = t[maxL]
+        leda2.trough2peakAnalysis.onset_idx = minL
+        leda2.trough2peakAnalysis.peaktime_idx = maxL
+        leda2.trough2peakAnalysis.amp = ds[maxL] - ds[minL]
+    else:
+        leda2.trough2peakAnalysis.onset = None
+        leda2.trough2peakAnalysis.peaktime = None
+        leda2.trough2peakAnalysis.onset_idx = None
+        leda2.trough2peakAnalysis.peaktime_idx = None
+        leda2.trough2peakAnalysis.amp = None
 
 
 def sdeco_interimpulsefit(driver, kernel, minL, maxL):

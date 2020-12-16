@@ -89,12 +89,12 @@ def sdeconv_analysis(x, estim_tonic=1):
     bg = analyse.bateman_gauss(tb, 5, 1, 2, 40, .4)
     idx = np.argmax(bg)
 
-    prefix = bg[:idx + 1] / bg[idx + 1] * d[0]  # +10
+    prefix = bg[:idx + 1] / bg[idx + 1] * d[0] #+ 10
     prefix = npa(prefix)
     prefix_idx = np.flatnonzero(prefix)
     prefix = prefix[prefix_idx]
     n_prefix = len(prefix)
-    d_ext = np.hstack((prefix, d))
+    d_ext = np.hstack((prefix, d.reshape(-1)))
 
     t_ext = np.arange(t[0] - dt, t[0] - (n_prefix) * dt, -dt)
     t_ext = np.hstack((t_ext[::-1], t))

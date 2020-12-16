@@ -164,10 +164,10 @@ def main():
 if __name__ == '__main__':
     df_all = main()
     #df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
-    df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_eda_ekf_cvx_Newlabel.csv')
+    #df_all = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_eda_ekf_leda_Newlabel.csv')
     #df_eda = pd.read_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_eda_lrLeda_feat.csv')
     df_all.set_index('timedata', inplace=True)
-    df_all = df_all.loc[:, ~df_all.columns.str.startswith('hrv')]
+    #df_all = df_all.loc[:, ~df_all.columns.str.startswith('hrv')]
     #df_eda.set_index('timedata', inplace=True)
     #df_eda = df_eda.drop(columns=['label', 'ID'])
     #df_all = df_all.loc[:, ~df_all.columns.str.startswith('eda')]
@@ -175,53 +175,68 @@ if __name__ == '__main__':
     #df_all.to_csv('/home/fefespinola/ETHZ_Fall_2020/features_all_all_lrLeda_feat.csv')
     print(df_all)
     
+    ## New feature names
+    new_feature_names = {
+    'hrv_hrv_mean_nni': 'HRV: mean nni',
+    'hrv_hrv_mean_hr': 'HRV: mean heart rate',
+    'hrv_hrv_mean': 'HRV: mean signal',
+    'eda_peaks_p': 'EDA: nr. peaks',
+    'eda_auc_p_s': 'EDA: area under SCR',
+    'eda_phasic_mfcc_mean': 'EDA: mean MFCC phasic',
+    'eda_tonic_min': 'EDA: min. tonic',
+    'eda_tonic_pct_5': 'EDA: 5th percentile tonic',
+    'eda_tonic_mfcc_mean': 'EDA: mean MFCC tonic',
+    'acc_acc_x_iqr': 'ACC: IQR x-axis',
+    'acc_acc_x_iqr_5_95': 'ACC: 5-95 IQR x-axis',
+    'acc_acc_y_energy': 'ACC: energy y-axis',
+    'acc_acc_y_rms': 'ACC: RMS y-axis',
+    'acc_acc_z_skewness': 'ACC: skewness z-axis',
+    'bvp_svd_entropy': 'BVP: SVD entropy',
+    'bvp_iqr': 'BVP: inter-quartile range',
+    'bvp_n_sign_changes': 'BVP: nr. sign changes',
+    'temp_max': 'TEMP: max.',
+    'temp_min': 'TEMP: min.',
+    'temp_pct_5': 'TEMP: 5th percentile',
+    'label': 'LABEL',
+}
+
     df_corr = df_all.loc[df_all['ID']=='S9']
     print(df_corr.columns)
-    columns = ['ID', 'eda_phasic_mean', 'eda_peaks_p', 'eda_auc_p_s', 'eda_phasic_mfcc_mean','eda_tonic_mean', 'eda_tonic_min',
-                            'eda_tonic_pct_5', 'eda_tonic_mfcc_mean', 'acc_acc_x_mean', 'acc_acc_x_kurtosis', 'acc_acc_x_iqr_5_95'
-                            , 'acc_acc_y_max', 'acc_acc_y_energy', 'acc_acc_y_rms', 'acc_acc_z_skewness', 'bvp_svd_entropy',
-                            'bvp_n_sign_changes', 'temp_mean', 'temp_min', 'temp_pct_5', 'label']
+    columns = ['ID', 'hrv_hrv_mean_nni', 'hrv_hrv_mean_hr', 'hrv_hrv_mean', 'eda_peaks_p', 'eda_auc_p_s', 'eda_phasic_mfcc_mean', 'eda_tonic_min',
+                            'eda_tonic_pct_5', 'eda_tonic_mfcc_mean', 'acc_acc_x_iqr', 'acc_acc_x_iqr_5_95'
+                            , 'acc_acc_y_energy', 'acc_acc_y_rms', 'acc_acc_z_skewness', 'bvp_svd_entropy', 'bvp_iqr',
+                            'bvp_n_sign_changes', 'temp_max', 'temp_min', 'temp_pct_5', 'label']
                             
     df_corr = df_corr.loc[:, columns]
     print(df_corr)
     df_corr = df_corr.replace([np.inf, -np.inf], np.nan)
     df_corr = df_corr.dropna(axis=1)
     df_corr = df_corr.corr('kendall')
+
+    df_corr.rename(columns=new_feature_names, inplace=True)
+    df_corr.rename(index=new_feature_names, inplace=True)
     print(df_corr)
 
     # get most correlated variables
-    cor_target = abs(df_corr["label"])
+    cor_target = abs(df_corr["LABEL"])
     relevant_features = cor_target[cor_target>=0.45]
     print('relevant features', relevant_features)
 
     plt.rcParams['figure.figsize'] = (20.0, 10.0)
     plt.rcParams['font.family'] = "serif"   
     plt.figure()
-    sns.heatmap(df_corr, annot=True, fmt=".1f", cmap='coolwarm', vmin=-1, vmax=1, annot_kws={'size':10})
-    #sns.heatmap(df_corr, cmap='coolwarm', vmin=-1, vmax=1)
+    #sns.heatmap(df_corr, annot=True, fmt=".1f", cmap='coolwarm', vmin=-1, vmax=1, annot_kws={'size':10})
+    sns.heatmap(df_corr, cmap='coolwarm', vmin=-1, vmax=1)
     plt.tight_layout()
     plt.savefig('/home/fefespinola/ETHZ_Fall_2020/plots/heatmap_corr.pdf', dpi=300, bbox_inches='tight')
 
 
-    '''
-    df_corr_0 = df_corr.loc[df_all['label']==0]
-    print(df_corr_0)
-    df_corr_0 = df_corr_0.corr('kendall')
-    print(df_corr_0)
-
-    df_corr_1 = df_corr.loc[df_all['label']=='1', :]
-    df_corr_1 = df_corr_1.corr(‘pearson’)
-    print(df_corr_1)
-    df_corr_2 = df_corr.loc[df_all['label']=='2', :]
-    df_corr_2 = df_corr_2.corr(‘pearson’)
-    print(df_corr_2)
-    '''
-
     ### for binary classification uncomment line below 
-    df_all['label'].replace(2, 0, inplace=True)
-    print('===== BINARY ====')
+    #df_all['label'].replace(2, 0, inplace=True)
+    #print('===== BINARY ====')
 
     print('---start classification---')
+    df_all.round(4)
     df = df_all.replace([np.inf, -np.inf], np.nan) # np.inf leads to problems with some techniques
 
     # Clean columns that contain a lot of nan values 
@@ -236,6 +251,7 @@ if __name__ == '__main__':
 
     X = df.drop(columns=['label', 'ID'])
     y = df['label'].astype('int')
+
     groups = df['ID']
     print("running %d-fold CV..." % (cv.get_n_splits(X, y, groups)))
 
@@ -247,8 +263,8 @@ if __name__ == '__main__':
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
         #### for binary classification uncomment line below
-        params = {'objective': 'binary', 'is_unbalance': True}
-        #params = {'objective': 'multiclass', 'is_unbalance': True}
+        #params = {'objective': 'binary', 'num_class':2, 'is_unbalance': True}
+        params = {'objective': 'multiclass',  'metric': 'multi_logloss', 'num_class':3, 'is_unbalance': True}
         model = lgb.LGBMClassifier(**params)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)

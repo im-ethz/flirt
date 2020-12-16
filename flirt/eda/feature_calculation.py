@@ -84,6 +84,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     results = pd.DataFrame(list(results))
     results.set_index('datetime', inplace=True)
     results.sort_index(inplace=True)
+    print(results)
 
     return results
 
@@ -103,14 +104,16 @@ def __get_features_per_window(phasic_data: pd.Series, tonic_data: pd.Series, win
         try:
             relevant_data_phasic = phasic_data.loc[
                 (phasic_data.index >= min_timestamp) & (phasic_data.index < max_timestamp)]
+            relevant_data_tonic = tonic_data.loc[
+                (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
+            mean_tonic = relevant_data_tonic.mean()
+            
             results.update(get_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(get_fd_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(get_MFCC_stats(np.ravel(relevant_data_phasic.values), 'phasic'))
             results.update(
-                __compute_peak_features.__process__(relevant_data_phasic))
+                __compute_peak_features.__process__(relevant_data_phasic, mean_tonic))
 
-            relevant_data_tonic = tonic_data.loc[
-                (tonic_data.index >= min_timestamp) & (tonic_data.index < max_timestamp)]
             results.update(get_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
             results.update(get_fd_stats(np.ravel(relevant_data_tonic.values), 'tonic'))
             results.update(get_MFCC_stats(np.ravel(relevant_data_tonic.values), 'tonic'))

@@ -5,39 +5,26 @@ from .data_utils import PeakFeatures
 
 class ComputeMITPeaks(PeakFeatures):
 
-    """
-    This function computes the peaks features for the relevant phasic data in the EDA signal. 
-
-    Parameters
-    -----------
-    data : pd.Series
-        relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), one of the columns must include the EDA phasic component: `phasic`
-    sampling_frequency : int, optional
-        the frequency with which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
-    offset: int, optional
-        the number of rising samples and falling samples after a peak needed to be counted as a peak
-    start_WT: int, optional
-        maximum number of seconds before the apex of a peak that is the "start" of the peak
-    end_WT: int, optional
-        maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
-    thres: float, optional
-        the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
-          
-    Returns
-    -------
-    dict
-        dictionary containing the peak features computed on the phasic component of the EDA data (peaks_p: number of peaks, rise_time_p: average rise time of the peaks, \
-        max_deriv_p: average value of the maximum derivative, amp_p: average amplitute of the peaks, decay_time_p: average decay time of the peaks, SCR_width_p: average width of the peak (SCR), \
-        auc_p: average area under the peak)
+    """ This class computes the peak features for the relevant phasic data in the EDA signal using the EDAexplorer \
+    peak detection algorithm. """         
     
-    References
-    -----------
-    - Taylor, S., Jaques, N., Chen, W., Fedor, S., Sano, A., & Picard, R. Automatic identification of artifacts in electrodermal activity data. In Engineering in Medicine and Biology Conference. 2015.
-    - https://github.com/MITMediaLabAffectiveComputing/eda-explorer
-    """
-
     def __init__(self, sampling_frequency: int = 4, offset: int = 1, start_WT: int = 3, end_WT: int = 10,
                  thres: float = 0.01):
+        """ Construct the model to compute peak features.
+        
+        Parameters
+        -----------
+        sampling_frequency : int, optional
+            the frequency with which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+        offset: int, optional
+            the number of rising samples and falling samples after a peak needed to be counted as a peak
+        start_WT: int, optional
+            maximum number of seconds before the apex of a peak that is the "start" of the peak
+        end_WT: int, optional
+            maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
+        thres: float, optional
+            the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
+        """
 
         self.sampling_frequency = sampling_frequency
         self.offset = offset
@@ -45,9 +32,35 @@ class ComputeMITPeaks(PeakFeatures):
         self.end_WT = end_WT
         self.thres = thres
 
-    def __process__(self, data: pd.Series) -> dict:
+    def __process__(self, data: pd.Series, mean_tonic: float) -> dict:
+        """ Perform the peak detection and compute the relevant features.
 
-        returned_peak_data = self.__find_peaks(data)
+        Parameters
+        ----------
+        data : pd.Series
+            relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica)
+
+        Returns
+        -------
+        dict
+            dictionary containing the peak features computed on the phasic component of the EDA data (peaks_p: number of peaks, rise_time_p: average rise time of the peaks, \
+            max_deriv_p: average value of the maximum derivative, amp_p: average amplitute of the peaks, decay_time_p: average decay time of the peaks, SCR_width_p: average width of the peak (SCR), \
+            auc_p: average area under the peak, auc_s: total area under all peaks)
+        
+        Examples
+        --------
+        >>> import flirt.reader.empatica
+        >>> import flirt.eda.preprocessing
+        >>> eda = flirt.reader.empatica.read_eda_file_into_df('./EDA.csv')
+        >>> peaks_features = flirt.eda.preprocessing.ComputeMITPeaks().__process__(eda['eda'])
+        
+        References
+        -----------
+        - Taylor, S., Jaques, N., Chen, W., Fedor, S., Sano, A., & Picard, R. Automatic identification of artifacts in electrodermal activity data. In Engineering in Medicine and Biology Conference. 2015.
+        - https://github.com/MITMediaLabAffectiveComputing/eda-explorer
+        """
+
+        returned_peak_data = self.__find_peaks(data, mean_tonic)
         result_df = pd.DataFrame(columns=["peaks", "amp", "max_deriv", "rise_time", "decay_time", "SCR_width"])
         result_df['peaks'] = returned_peak_data[0]
         result_df['amp'] = returned_peak_data[5]
@@ -86,7 +99,7 @@ class ComputeMITPeaks(PeakFeatures):
 
         return results
 
-    def __find_peaks(self, data):
+    def __find_peaks(self, data, mean_tonic):
         """
         This function finds the peaks of an EDA signal and returns basic properties.
         Also, peak_end is assumed to be no later than the start of the next peak.
@@ -108,6 +121,7 @@ class ComputeMITPeaks(PeakFeatures):
         amplitude:           list of floats,  value of EDA at apex - value of EDA at start
         max_deriv:           list of floats, max derivative within 1 second of apex of SCR
         """
+        data = data/mean_tonic # normalise SCR for global input parameters
         sample_rate = self.sampling_frequency
         offset = self.offset*self.sampling_frequency
         start_WT = self.start_WT
@@ -216,7 +230,7 @@ class ComputeMITPeaks(PeakFeatures):
         peak_start = np.concatenate((peak_start, np.array([0])))
         max_deriv = max_deriv * sample_rate  # now in change in amplitude over change in time form (uS/second)
 
-        return peaks, peak_start, peak_start_times, peak_end, peak_end_times, amplitude, max_deriv, rise_time, decay_time, scr_width, half_rise
+        return peaks, peak_start, peak_start_times, peak_end, peak_end_times, amplitude*mean_tonic, max_deriv*mean_tonic, rise_time, decay_time, scr_width, half_rise
 
     def __get_seconds_and_microseconds(self, pandas_time):
         return pandas_time.seconds + pandas_time.microseconds * 1e-6

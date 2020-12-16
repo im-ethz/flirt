@@ -37,7 +37,8 @@ requirements = [
     "sympy",
     "glob2",
     "lightgbm",
-    "pwt"
+    "pwt",
+    "pyparticleest"
 ]
 
 extras_require = {
