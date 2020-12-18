@@ -12,45 +12,50 @@ from .preprocessing import get_MFCC_stats, get_fd_stats
 
 
 
-def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: int = 60, window_step_size: float = 1.0, num_cores=2,
+def get_eda_features(data: pd.Series, data_frequency: int = 4, discard: int = 0, window_length: int = 60, window_step_size: float = 1.0, num_cores=2,
                      preprocessor: data_utils.Preprocessor = LowPassFilter(),
                      signal_decomposition: data_utils.SignalDecomposition = CvxEda(),
                      scr_features: data_utils.PeakFeatures = ComputeMITPeaks()):
     """
-    This function computes several statistical and entropy-based features for the phasic and tonic components of the EDA signal.
-
+    This function computes several time-domain and frequency-based features for the phasic and tonic components of the EDA signal.
+    
     Parameters
     ----------
     data : pd.Series
         raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
-    window_length: int, optional
-        length of window to slide over the data, to compute features (in seconds)
-    window_step_size:
-        step-size taken to move the sliding window (in seconds)
     data_frequency : int, optional
         the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
+    discard: int, optional
+        number of seconds of data to discard from filtered data onto which to compute decomposition
+    window_length: float, optional
+        length of window to slide over the data, to compute features (in seconds)
+    window_step_size: float, optional
+        step-size taken to move the sliding window (in seconds)
     num_cores : int, optional
         number of cores to use for parallel processing, by default use all available
     preprocessor: class, optional
-        the method chosen to clean the data: low-pass filtering or Kalman filtering or artifact-detection with low-pass filtering
+        the method chosen to clean the data: low-pass filtering, Kalman filtering, particle filtering, artifact-detection with low-pass filtering (default: low-pass filtering)
     signal_decomposition: class, optional
-        the method chosen to decompose the data (default: CvxEda)
+        the method chosen to decompose the data: CvxEDA or LedaLab (default: CvxEda)
     scr_features: class, optional
-        computes peak features of the Skin Conductance response data using the algorithm from MIT Media Lab
+        computes peak features of the Skin Conductance response data using the algorithm from MIT or that from Neurokit (default: MIT)
 
     Returns
     -------
     pd.DataFrame
-        dataframe containing all statistical, peak and entropy-based features, index is a list of timestamps according to the window step size
+        dataframe containing all time-domain, peak and frequency-domain features, index is a list of timestamps according to the window step size
 
     Notes
     -----
     The output dataframe contains the following EDA features computed for both the tonic and phasic components
 
-        - **Statistical Features**: mean, std, min, max, ptp, sum, energy, skewness, kurtosis, \
-        peaks, rms, lineintegral, n_above_mean, n_below_mean, n_sign_changes, iqr, iqr_5_95, pct_5, pct_95
-        - **Peak Features**: peaks_p, rise_time_p, max_deriv_p, amp_p, decay_time_p, SCR_width_p, auc_p
-        - **Entropy Features**: entropy, perm_entropy, svd_entropy
+        - **Time-Domain Features**: mean, std, min, max, ptp, sum, energy, skewness, kurtosis, \
+        peaks, rms, lineintegral, n_above_mean, n_below_mean, n_sign_changes, iqr, iqr_5_95, pct_5, pct_95, \
+        entropy, perm_entropy, svd_entropy
+        - **Peak Features**: peaks_p, rise_time_p, max_deriv_p, amp_p, decay_time_p, SCR_width_p, auc_p_m, auc_p_s
+        - **Frequency-Domain Features**: fd_sma, fd_energy, fd_varPower, fd_Power_0.05, fd_Power_0.15, fd_Power_0.25, fd_Power_0.35, \
+        fd_Power_0.45, fd_kurtosis, fd_iqr, 
+        - **Time-Frequency-Domain Features**: mfcc_mean, mfcc_std, mfcc_median, mfcc_skewness, mfcc_kurtosis, mfcc_iqr
 
     Examples
     --------
@@ -68,7 +73,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, window_length: in
     filtered_dataframe = preprocessor.__process__(data)
 
     # Decompose Data
-    phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe)
+    phasic_data, tonic_data = signal_decomposition.__process__(filtered_dataframe[discard*data_frequency:])
 
     # advance by window_step_size * data_frequency
     inputs = trange(0, len(data) - 1, 

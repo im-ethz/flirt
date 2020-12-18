@@ -316,8 +316,7 @@ if __name__ == '__main__':
         f1_metric = f1_score(y_test, y_pred, average='macro')
         f1_dict[subj] = f1_metric
         print(f1_dict)
-        f1_tot = f1_tot + f1_metric
-        print(confusion_matrix(y_test, y_pred))
+        f1_tot = f1_tot matrix(y_test, y_pred))
 
 
     f1_tot = f1_tot/len(subjects)

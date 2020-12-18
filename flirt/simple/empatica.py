@@ -90,8 +90,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
                 #preprocessor=eda_preprocess.MultiStepPipeline(eda_preprocess.MitExplorerDetector(filepath))
                 df_eda_features = flirt.eda.get_eda_features(eda_data.iloc[:, 0], window_length=window_length,
                                                              window_step_size=window_step_size,
-                                                             preprocessor=eda_preprocess.LowPassFilter(),
-                                                             signal_decomposition=eda_preprocess.CvxEda(),
+                                                             preprocessor=eda_preprocess.ExtendedKalmanFilter(),
+                                                             signal_decomposition=eda_preprocess.CvxEDA(),
                                                              scr_features=eda_preprocess.ComputeMITPeaks()).add_prefix('eda_')
                                                     
 

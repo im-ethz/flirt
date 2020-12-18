@@ -24,7 +24,7 @@ rc('axes', labelsize=8)
 
 # Retrieve data
 eda = flirt.reader.empatica.read_eda_file_into_df('/home/fefespinola/ETHZ_Fall_2020/project_data/WESAD/S11/EDA.csv')
-eda = eda#[0:6000]
+#eda = eda[10:]
 filepath = '/home/fefespinola/ETHZ_Fall_2020/project_data/WESAD/S11'
 fs = 4
 eda_len = len(eda)
@@ -35,6 +35,7 @@ time = np.linspace(0, (eda_len)/fs, eda_len, endpoint=False)
 lpf = flirt.eda.preprocessing.LowPassFilter(order = 1, cutoff=0.1, filter = 'butter')
 ekf = flirt.eda.preprocessing.ExtendedKalmanFilter(alpha=31, d_min = 0.005, d_max=0.5, min_diff=0.001, max_diff=0.1,
                                                     min_Savi_Go=-0.03, max_Savi_Go=0.03)
+pf = flirt.eda.preprocessing.ParticleFilter()
 lr_detection = flirt.eda.preprocessing.MultiStepPipeline()
 svm_detection = flirt.eda.preprocessing.MultiStepPipeline(
     artefacts_detection=flirt.eda.preprocessing.MitExplorerDetector(filepath=filepath), 
@@ -47,8 +48,9 @@ peaks_neuro = flirt.eda.preprocessing.ComputeNeurokitPeaks(amplitude_min=0.5)
 #### Process data to plot
 # filter
 #filtered_lpf = lpf.__process__(eda)
-#filtered_ekf = ekf.__process__(eda)
-filtered_lr = lr_detection.__process__(eda)
+#filtered_lkf = ekf.__process__(eda)
+filtered_lr = pf.__process__(eda)
+#filtered_lr = lr_detection.__process__(eda)
 #artefacts_lr = filtered_lpf-filtered_lr
 #filtered_svm = svm_detection.__process__(eda)
 #artefacts_svm = filtered_lpf-filtered_svm
@@ -60,10 +62,10 @@ filtered_lr = lr_detection.__process__(eda)
 #cvx_raw = phasic_cvx_raw + tonic_cvx_raw #reconstructed signal
 #leda_raw = phasic_leda_raw + tonic_leda_raw
 
-phasic_cvx_lr, tonic_cvx_lr = cvx.__process__(filtered_lr)
-phasic_leda_lr, tonic_leda_lr = ledalab.__process__(filtered_lr)
-cvx_lr = phasic_cvx_lr + tonic_cvx_lr #reconstructed signal
-leda_lr = phasic_leda_lr + tonic_leda_lr
+phasic_cvx_lr, tonic_cvx_lr = cvx.__process__(filtered_lr[20:])
+#phasic_leda_lr, tonic_leda_lr = ledalab.__process__(filtered_lr)
+#cvx_lr = phasic_cvx_lr + tonic_cvx_lr #reconstructed signal
+#leda_lr = phasic_leda_lr + tonic_leda_lr
 
 #Peak features
 #peaks_info_mit = peaks_mit.__process__(phasic_cvx_lr)
@@ -73,12 +75,15 @@ leda_lr = phasic_leda_lr + tonic_leda_lr
 
 print('done data generation')
 
+print('eda', eda[20:40])
+print('lr', filtered_lr[20:40])
+print('tonic', tonic_cvx_lr[0:20])
 ### plotting
 ax1 = plt.subplot(311)
-plt.plot(time, np.array(eda), 'y-', linewidth = 1, alpha = 1, label='Raw EDA')
-plt.plot(time, np.array(cvx_lr), 'g-', linewidth = 0.9, alpha = 0.9, label='Reconstructed EDA cvx')
-plt.plot(time, np.array(leda_lr), 'b-', linewidth = 0.8, alpha = 0.8, label='Reconstructed EDA ledalab')
-plt.plot(time, np.array(filtered_lr), 'r-', linewidth = 0.7, alpha = 0.7, label='EDA Filtered with LR')
+plt.plot(time[1:], np.array(eda[1:]), 'y-', linewidth = 1, alpha = 1, label='Raw EDA')
+#plt.plot(time, np.array(cvx_lr), 'g-', linewidth = 0.9, alpha = 0.9, label='Reconstructed EDA cvx')
+##plt.plot(time, np.array(leda_lr), 'b-', linewidth = 0.8, alpha = 0.8, label='Reconstructed EDA ledalab')
+plt.plot(time[1:], np.array(filtered_lr[1:]), 'r-', linewidth = 0.7, alpha = 0.7, label='EDA Filtered with LR')
 #plt.plot(time, np.array(artefacts_lr), 'r-', linewidth = 0.8, alpha = 1, label='Artefact Locations')  
 ax1.set_title('EDA Artefact Locations using Logistic Regression Method')
 ax1.set_ylabel("SC Amplitude ($\mu S$)")
@@ -92,11 +97,11 @@ plt.legend(bbox_to_anchor=(1.4, 1.4), loc=1, frameon=True, columnspacing=0.1, la
     fancybox=True)
 
 ax2 = plt.subplot(312)  
-#plt.plot(np.array(eda), 'y-', linewidth = 0.8, alpha = 1, label='Raw EDA')
-plt.plot(time, np.array(phasic_cvx_lr), 'b-', linewidth = 1, alpha = 1, label='Phasic Data cvx')  
-#plt.plot(np.array(filtered_svm), 'b-', linewidth = 0.8, alpha = 0.8, label='EDA Filtered with SVM')  
+plt.plot(np.array(eda[2:]), 'y-', linewidth = 0.8, alpha = 1, label='Raw EDA')
+#plt.plot(time, np.array(phasic_cvx_lr), 'b-', linewidth = 1, alpha = 1, label='Phasic Data cvx')  
+plt.plot(np.array(filtered_lr[2:]), 'b-', linewidth = 0.8, alpha = 0.8, label='EDA Filtered with SVM')  
 #plt.plot(np.array(artefacts_svm), 'r-', linewidth = 0.8, alpha = 1, label='Artefact Locations')
-plt.plot(time, np.array(phasic_leda_lr), 'r--', linewidth = 0.8, alpha = 0.8, label='Phasic Data ledalab')
+#plt.plot(time, np.array(phasic_leda_lr), 'r--', linewidth = 0.8, alpha = 0.8, label='Phasic Data ledalab')
 ax2.set_title('Phasic Component')
 ax2.set_ylabel("SC Amplitude ($\mu S$)")
 #ax2.set_xlim(-1, 5)
@@ -110,10 +115,10 @@ plt.legend(bbox_to_anchor=(1.2, 1.2), loc=1, frameon=True, columnspacing=0.1, la
 
 
 ax3 = plt.subplot(313) 
-#plt.plot(time, np.array(eda), 'y-', linewidth = 1, alpha = 1, label='Raw EDA') 
-plt.plot(time, np.array(tonic_cvx_lr), 'b-', linewidth = 1, alpha = 1, label='Tonic Data  cvx')  
-#plt.plot(time, np.array(filtered_ekf), 'b-', linewidth = 0.8, alpha = 0.9, label='filtered eda ekf')  
-plt.plot(time, np.array(tonic_leda_lr), 'r--', linewidth = 0.8, alpha = 0.8, label='Tonic Data ledalab')
+plt.plot(time[3:], np.array(eda[3:]), 'y-', linewidth = 1, alpha = 1, label='Raw EDA') 
+#plt.plot(time, np.array(tonic_cvx_lr), 'b-', linewidth = 1, alpha = 1, label='Tonic Data  cvx')  
+plt.plot(time[3:], np.array(filtered_lr[3:]), 'b-', linewidth = 0.8, alpha = 0.9, label='filtered eda ekf')  
+#plt.plot(time, np.array(tonic_leda_lr), 'r--', linewidth = 0.8, alpha = 0.8, label='Tonic Data ledalab')
 ax3.set_title('Tonic Signal')
 ax3.set_xlabel("Time (s)")
 ax3.set_ylabel("EDA Amplitude ($\mu S$)")
@@ -129,5 +134,5 @@ plt.legend(bbox_to_anchor=(1.2, 1.2), loc=1, frameon=True, columnspacing=0.1, la
 
 print('done plotting')
 plt.tight_layout()
-plt.savefig('tonic_phasic_from_raw_default.pdf', dpi=300, bbox_inches='tight', transparent=False)
+plt.savefig('test.pdf', dpi=300, bbox_inches='tight', transparent=False)
 

@@ -8,6 +8,7 @@ from .peaks_neurokit import ComputeNeurokitPeaks
 from .ledalab import LedaLab
 from .fd_stats import get_fd_stats
 from .MFCC_stats import get_MFCC_stats
+from .particleFilter import ParticleFilter
 
 __all__ = [
     "CvxEda",
@@ -21,4 +22,5 @@ __all__ = [
     "LedaLab",
     "get_fd_stats",
     "get_MFCC_stats",
+    "ParticleFilter",
 ]
