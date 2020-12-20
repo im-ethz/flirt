@@ -113,7 +113,7 @@ class ParticleFilter(Preprocessor):
         sim.simulate(self.num_particles, self.num_smoothers, filter='PF', smoother='full', meas_first = False)
 
         vals_mean = sim.get_filtered_mean()
-        particle_filtered = vals_mean[:, 0]
+        particle_filtered = vals_mean[:-1, 0]
 
         # Return SC filtered data as a pd.Series
         return pd.Series(data=particle_filtered, index=data.index, name='filtered_eda')

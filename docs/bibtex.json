@@ -1,0 +1,26 @@
+{
+    "cited": {
+        "theory/eda-analysis": [
+            "survey2020",
+            "Kleckner2018",
+            "Gashi2020",
+            "2020SciPy-NMeth",
+            "Amin2018",
+            "Tronstad2015",
+            "Taylor2015",
+            "Zhang2017",
+            "EDAexplorer2015",
+            "MediaLabUT",
+            "Greco2016",
+            "Benedek2010",
+            "Healey2005",
+            "Ghaderyan2016",
+            "Alberdi2016",
+            "Wang2009",
+            "neurokit2",
+            "Nabian2018",
+            "Halem2020",
+            "Kim2004"
+        ]
+    }
+}

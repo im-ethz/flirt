@@ -7,11 +7,11 @@ from .low_pass import LowPassFilter
 from ..models.ledalab import leda2, utils, analyse, deconvolution
 
 class LedaLab(SignalDecomposition):
-    """ This class decomposes the filtered EDA signal into tonic and phasic components using the Ledalab algorithm, adapted from MATLAB. It also \
+    r""" This class decomposes the filtered EDA signal into tonic and phasic components using the Ledalab algorithm, adapted from MATLAB. It also \
     ensures that the tonic and phasic signals never drop below zero."""
 
     def __init__(self, sampling_rate: int=4, downsample: int=1, optimisation: int=0):
-        """ Construct the signal decomposition model.
+        r""" Construct the signal decomposition model.
 
         Parameters
         ----------- 
@@ -29,7 +29,8 @@ class LedaLab(SignalDecomposition):
         self.optimisation = optimisation
 
     def __process__(self, data: pd.Series) -> (pd.Series, pd.Series):
-        """Decompose electrodermal activity into phasic and tonic components.
+        r"""
+        Decompose electrodermal activity into phasic and tonic components.
 
         Parameters
         -----------
@@ -38,7 +39,7 @@ class LedaLab(SignalDecomposition):
             columns is the filtered eda data: `eda`
         
         Returns
-        -------
+        --------
         pd.Series, pd.Series
             two dataframes containing the phasic and the tonic components, index is a list of \
                 timestamps for both dataframes
@@ -54,11 +55,12 @@ class LedaLab(SignalDecomposition):
         ----------
         - Benedek, M. & Kaernbach, C. Decomposition of skin conductance data by means of nonnegative deconvolution. Psychophysiology. 2010
         - https://github.com/HIIT/Ledapy
+        
         """
 
         leda2.reset()
         leda2.current.do_optimize = self.optimisation
-        self.import_data(data)
+        self.__import_data(data)
         deconvolution.sdeco(self.optimisation)
         
         phasic = leda2.analysis.phasicData
@@ -84,12 +86,8 @@ class LedaLab(SignalDecomposition):
 
         return data_phasic, data_tonic
 
-    def import_data(self, data):
-        """
-        Sets leda2 object to its appropriate values to allow analysis
-        Adapted from main/import/import_data.m
-        """
-        
+    def __import_data(self, data):
+
         conductance_data = np.array(data.values, dtype='float64')
         time_data = utils.genTimeVector(conductance_data, self.sampling_rate)
 

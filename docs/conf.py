@@ -57,12 +57,20 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'm2r2',
-    'sphinx.ext.autosectionlabel'
+    'sphinx.ext.autosectionlabel',
+    'sphinx.ext.mathjax',
+    'sphinxcontrib.bibtex',
 ]
 
 autodoc_default_options = {
     'undoc-members': True,
+    'special-members': '__init__, __process__',
 }
+
+# For bibliography
+bibtex_bibfiles = ['theory/refs.bib']
+bibtex_default_style = 'unsrt'
+bibtex_encoding = 'latin'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
