@@ -26,7 +26,9 @@ EDA Preprocessing
 .. automodule:: flirt.eda.preprocessing
    :members:
    :special-members:
+   :inherited-members:
 
+   
 
 Reader
 -------

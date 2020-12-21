@@ -60,12 +60,19 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.mathjax',
     'sphinxcontrib.bibtex',
+    'sphinx.ext.autosummary',
 ]
 
 autodoc_default_options = {
     'undoc-members': True,
     'special-members': '__init__, __process__',
+    'inherited-members': True,
+    'show-inheritance': True,
+
 }
+
+# Only the class' docstring is inserted.
+autoclass_content = 'class'
 
 # For bibliography
 bibtex_bibfiles = ['theory/refs.bib']
