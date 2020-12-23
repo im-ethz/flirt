@@ -14,7 +14,7 @@ reliability of the measures against movements artifact and noise, calculating no
     :alt: eda pipeline Workflow
 
 To get the EDA features, one must use the function `get_eda_features() <../api.html#module-flirt.eda>`_, where a filtering algorithm, a decomposition algorithm and a peak detection algorithm can be specified. \
-The function can be called without specifying any parameters, just relying on the default algorithms, which were set to be low-pass filtering, followed by CvxEDA decomposition, and finally \
+The function can be called without specifying any parameters, just relying on the default algorithms, which were set to be EKF, followed by CvxEDA decomposition, and finally \
 MITPeaks detection. The default parameters for each algorithm were set to maximise performance and increase robusteness when considering wearable-recorded data. The default algorithms can easily be changed and the algorithm's default parameters can betuned depending on the application. \
 A guide to tuning the main parameters is specified in the Table 1 below.
 

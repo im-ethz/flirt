@@ -34,7 +34,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, discard: int = 0,
     num_cores : int, optional
         number of cores to use for parallel processing, by default use all available
     preprocessor: class, optional
-        the method chosen to clean the data: low-pass filtering, Kalman filtering, particle filtering, artifact-detection with low-pass filtering (default: low-pass filtering)
+        the method chosen to clean the data: low-pass filtering, Kalman filtering, particle filtering, artifact-detection with low-pass filtering (default: EKF)
     signal_decomposition: class, optional
         the method chosen to decompose the data: CvxEDA or LedaLab (default: CvxEda)
     scr_features: class, optional
