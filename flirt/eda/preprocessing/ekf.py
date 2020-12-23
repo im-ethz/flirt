@@ -48,7 +48,7 @@ class ExtendedKalmanFilter(Preprocessor):
         Parameters
         ----------
         data : pd.Series
-            raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
+            raw EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
 
         Returns
         -------

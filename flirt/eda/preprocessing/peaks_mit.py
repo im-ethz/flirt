@@ -6,7 +6,7 @@ from .data_utils import PeakFeatures
 class ComputeMITPeaks(PeakFeatures):
 
     """ This class computes the peak features for the relevant phasic data in the EDA signal using the EDAexplorer \
-    peak detection algorithm. """         
+    peak detection algorithm from MIT. """         
     
     def __init__(self, sampling_frequency: int = 4, offset: int = 1, start_WT: int = 3, end_WT: int = 10,
                  thres: float = 0.01):
@@ -23,7 +23,7 @@ class ComputeMITPeaks(PeakFeatures):
         end_WT: int, optional
             maximum number of seconds after the apex of a peak that is the "rec.t/2" of the peak, 50% of amp
         thres: float, optional
-            the minimum uS change required to register as a peak, defaults as 0 (i.e. all peaks count)
+            the minimum uS change required to register as a peak (0 means all peaks count)
         """
 
         self.sampling_frequency = sampling_frequency
@@ -38,7 +38,7 @@ class ComputeMITPeaks(PeakFeatures):
         Parameters
         ----------
         data : pd.Series
-            relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica)
+            relevant data onto which compute peak features , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica)
 
         Returns
         -------

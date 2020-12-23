@@ -22,11 +22,11 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, discard: int = 0,
     Parameters
     ----------
     data : pd.Series
-        raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
+        raw EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
     data_frequency : int, optional
         the frequency at which the sensor used gathers EDA data (e.g.: 4Hz for the Empatica E4)
     discard: int, optional
-        number of seconds of data to discard from filtered data onto which to compute decomposition
+        number of seconds of data to discard from the filtered data onto which to compute the SCR/SCL decomposition
     window_length: float, optional
         length of window to slide over the data, to compute features (in seconds)
     window_step_size: float, optional
@@ -52,7 +52,7 @@ def get_eda_features(data: pd.Series, data_frequency: int = 4, discard: int = 0,
         - **Time-Domain Features**: mean, std, min, max, ptp, sum, energy, skewness, kurtosis, \
         peaks, rms, lineintegral, n_above_mean, n_below_mean, n_sign_changes, iqr, iqr_5_95, pct_5, pct_95, \
         entropy, perm_entropy, svd_entropy
-        - **Peak Features**: peaks_p, rise_time_p, max_deriv_p, amp_p, decay_time_p, SCR_width_p, auc_p_m, auc_p_s
+        - **Peak Features (only on SCR)**: peaks_p, rise_time_p, max_deriv_p, amp_p, decay_time_p, SCR_width_p, auc_p_m, auc_p_s
         - **Frequency-Domain Features**: fd_sma, fd_energy, fd_varPower, fd_Power_0.05, fd_Power_0.15, fd_Power_0.25, fd_Power_0.35, \
         fd_Power_0.45, fd_kurtosis, fd_iqr, 
         - **Time-Frequency-Domain Features**: mfcc_mean, mfcc_std, mfcc_median, mfcc_skewness, mfcc_kurtosis, mfcc_iqr

@@ -50,7 +50,7 @@ class CvxEda(SignalDecomposition):
         Parameters
         -----------
         data : pd.Series
-            filtered EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
+            filtered EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), \
             column is the filtered eda data: `eda`
 
         Returns

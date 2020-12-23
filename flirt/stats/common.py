@@ -28,6 +28,24 @@ FUNCTIONS = {
 
 
 def get_stats(data, key_suffix: str = None, entropies: bool = True):
+    """ Function that computes the EDA time-domain features.
+    
+    Parameters
+    -----------
+    data: np.ndarray or pd.Series
+        EDA data onto which to compute the features, can be the raw data, the filtered data, the phasic or the tonic component. 
+    key_suffix: str, optional
+        Suffix to place in-front of feature name.
+    entropies: bool, optional
+        Whether to compute entropy features.
+
+    Returns
+    --------
+    dict
+        Returns a dictionary with the following time-domain features: mean, standard deviation, minimum, maximum, peak-to-peak, \
+        sum, energy, skewness, kurtosis, peaks, root-mean-square, lineintegral, n. above mean, n. below mean, n. sign changes, inter-quartile range, \
+        inter-quartile range in range 5-95, 5th percentile, 95th percentile, entropy, permutation entropy, entropy standard deviation.
+    """
     data = np.asarray(data)
     results = {}
     if len(data) > 0:

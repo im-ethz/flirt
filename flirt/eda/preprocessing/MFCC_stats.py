@@ -17,6 +17,22 @@ def __real_cestrum(data):
     return ceps
 
 def get_MFCC_stats(data, key_suffix: str = None):
+    """ 
+    Function that computes the Mel-Frequency Cepstrum Components (MFCC) features.
+    
+    Parameters
+    -----------
+    data: np.ndarray or pd.Series
+        EDA data onto which to compute the features, can be the raw data, the filtered data, the phasic or the tonic component. 
+    key_suffix: str, optional
+        Suffix to place in-front of feature name.
+        
+    Returns
+    --------
+    dict
+        Returns a dictionary with the following MFCC features: mean, standard deviation, median, skewnes, kurtosis, inter-quartile range.
+    """
+    
     data = np.asarray(data)
     results = {}
     if len(data) > 0:

@@ -7,12 +7,14 @@ Introduction
 We present a modular, user-friendly EDA processing pipeline in order to retrieve reliable EDA measures, which can be directly utilized by machine learning algorithms to predict health conditions, arousal levels, etc.... \ 
 The pipeline consists of three main parts: raw EDA signal cleaning to remove high frequency noise and artefacts, decomposition into tonic and phasic components, and EDA feature generation. \
 We put a special emphasis on tailoring the algorithms to data collected with wearable devices in uncontrolled environments. This requires increasing the \
-reliability of the measures against movements artifact and noise, calculating novel EDA features that highly correlate with the ANS, and providing parameters accurately tuned for this purpose. An overview of the processing pipeline implemented is shown in the Figure below.
+reliability of the measures against movements artifact and noise, calculating novel EDA features that highly correlate with the autonomous nervous system (ANS), and providing parameters that are accurately tuned for this purpose. An overview of the processing pipeline implemented is shown in the Figure below.
 
-![eda pipeline Workflow](https://github.com/im-ethz/flirt/tree/feature/eda/docs/img/flirt-workflow.png)
+.. image:: ../img/eda_pipeline_final.PNG
+    :width: 700
+    :alt: eda pipeline Workflow
 
 To get the EDA features, one must use the function `get_eda_features() <../api.html#module-flirt.eda>`_, where a filtering algorithm, a decomposition algorithm and a peak detection algorithm can be specified. \
-The function can be called without specifying anything, just relying on the default algorithms, which were set to be low-pass filtering, followed by CvxEDA decomposition, and finally \
+The function can be called without specifying any parameters, just relying on the default algorithms, which were set to be low-pass filtering, followed by CvxEDA decomposition, and finally \
 MITPeaks detection. The default parameters for each algorithm were set to maximise performance and increase robusteness when considering wearable-recorded data. The default algorithms can easily be changed and the algorithm's default parameters can betuned depending on the application. \
 A guide to tuning the main parameters is specified in the Table 1 below.
 
@@ -58,6 +60,8 @@ Table 1: *Summary of the most influential parameters of the pre-processing pipel
 +------------------------+-------------------------------+------------------------------------------------------------------------------+
 | ComputeNeurokitPeaks() | amplitude\_min                | Increasing it makes the peak detection stricter: less peaks are detected     |
 +------------------------+-------------------------------+------------------------------------------------------------------------------+
+
+Below is a more detailed description of all algorithms implemented in the FLIRT EDA pre-processing pipeline. 
 
 Low-Pass Filter `(LPF) <../api.html#module-flirt.eda.preprocessing.LowPassFilter>`_
 -------------------------------------------------------------------------------------
@@ -144,21 +148,21 @@ Decomposition Algorithms
 -------------------------
 **cvxEDA:** The `cvxEDA <../api.html#module-flirt.eda.preprocessing.CvxEDA>`_ algorithm is used to decompose the SC recording because it is computationally efficient as well as recommended for use with the Empatica E4 :cite:`Greco2016`. The basic principle of cvxEDA is to model the EDA signal as the sum of a phasic term, a tonic term, and additive white Gaussian noise. The algorithm then determines the phasic and tonic components that maximise the likelihood of observing a specific SC time series. The convex optimization problem is rewritten as a standard Quadratic Program (QP), which can be solved efficiently using one of the many QP solvers available.
 
-From an implementation perspective, the default values for the main parameters were chosen to achieve optimal  results in uncontrolled as suggested by :cite:`Greco2016`. Nevertheless, these parameters can be changed to fit the user's needs. 
+From an implementation perspective, the default values for the main parameters were chosen to achieve optimal results in uncontrolled environments as suggested by :cite:`Greco2016`. Nevertheless, these parameters can be changed to fit the user's needs. 
 
-After decomposition, the phasic and tonic components are further filtered using a low-pass Butterworth filter to remove negative phasic and tonic values (if present), which are physiologically incoherent. 
+After decomposition, the phasic and tonic components are further filtered using a low-pass Butterworth filter to remove negative phasic and tonic values (if present), which are physiologically incoherent (nerve firing cannot be negative). 
 
 **Ledalab:** An alternative to the cvxEDA algorithm was implemented to decompose the EDA signal into its phasic and tonic components: the `Ledalab <../api.html#module-flirt.eda.preprocessing.LedaLab>`_ algorithm by :cite:`Benedek2010`. Ledalab was chosen because it requires no arguments other than the data itself and therefore can be generalised to all wearable-device users, without additional parameter fine-tuning. 
 
 The key concept in Ledalab is to model the SC signal as a sum of a phasic and tonic driver, convolved with an impulse response. This impulse response is modeled using the Bateman equation with parameters :math:`τ 1` and :math:`τ 2` (to be optimised). First, the tonic estimate is performed by deconvolving the SC signal and removing sections where SCR peaks are present. The SCR component is then retrieved by convolving the peaks with the impulse response.   
 
-After decomposition, the phasic and tonic components are further filtered using a low-pass Butterworth filter to remove negative phasic and tonic values (if present), which are physiologically incoherent. 
+After decomposition, the phasic and tonic components are further filtered using a low-pass Butterworth filter to remove negative phasic and tonic values (if present), which are physiologically incoherent (nerve firing cannot be negative). 
 
 Feature Engineering
 --------------------
-**Time-Domain Features:** General statistical and entropy features are computed on both the phasic and tonic components for each window. A description of the time domain features calculated can be found in `Time-Domain Features <../api.html#module-flirt.stats>`_. These features were chosen because they best describe the phasic and tonic signals recorded from wearable devices, as suggested by :cite:`Healey2005,Ghaderyan2016`. 
+**Time-Domain Features:** General statistical and entropy features are computed on both the phasic and tonic components for each window. A description of the time domain features calculated can be found in `Time-Domain Features <../api.html#module-flirt.stats.get_stats>`_. These features were chosen because they best describe the phasic and tonic signals recorded from wearable devices, as suggested by :cite:`Healey2005,Ghaderyan2016`. 
 
-**Frequency-Domain Features:** Several features are computed on the frequency domain signal of the phasic and tonic components for each window. A description of the frequency domain features calculated can be found in `Frequency-Domain Features <../api.html#module-flirt.eda.preprocessing.get_fd_stats>`_. The frequency content of the EDA was proven to provide additional valuable information about the sudomotor activity :cite:`Ghaderyan2016,Alberdi2016`. More specifically, the frequency domain can describe some brief, transient instances in the signal, which are unlikely to be detected by the time domain features. The power information in different frequency bands (chosen here to be :math:`[0.05-0.5]Hz` :cite:`Wang2009`) gives crucial details on the physiological processes of the sweat glands, given that the EDA is composed of fast and slow components. 
+**Frequency-Domain Features:** Several features are computed on the frequency domain signal of the phasic and tonic components for each window. A description of the frequency domain features calculated can be found in `Frequency-Domain Features <../api.html#module-flirt.eda.preprocessing.get_fd_stats>`_. The frequency content of the EDA was proven to provide additional valuable information about the sudomotor activity :cite:`Ghaderyan2016,Alberdi2016`. More specifically, the frequency domain can describe some brief, transient instances in the signal, which are unlikely to be detected by the time domain features. The power information in different frequency bands (chosen here to be :math:`[0.05-0.55]Hz` :cite:`Wang2009`) gives crucial details on the physiological processes of the sweat glands, given that the EDA is composed of fast and slow components. 
 
 **Time-Frequency-Domain Features:** A Cepstrum analysis is performed to obtain time-frequency domain features of both the phasic and tonic components for each window. A description of the time-frequency domain features calculated can be found in Table `Mixed-Domain Features <../api.html#module-flirt.eda.preprocessing.get_MFCC_stats>`_. The Cepstrum signal, :math:`C` is found by :cite:`Ghaderyan2016`:
 

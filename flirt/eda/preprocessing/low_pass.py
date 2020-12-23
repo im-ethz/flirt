@@ -22,7 +22,7 @@ class LowPassFilter(Preprocessor):
         cutoff : float, optional
             desired cutoff frequency, below which the signal is kept (can be approximated using spectral analysis and determining the most prominent frequencies to keep)
         filter : str, optional
-            the type of filter to use: 'butter' for Butterworth filter, 'cheby1' for Chebyshev I filter, 'cheby2' for Chebyshev II filter, 'ellip' for Cauer filter, 'bessel' for Bessel filter
+            the type of filter to use: *butter* for Butterworth filter, *cheby1* for Chebyshev I filter, *cheby2* for Chebyshev II filter, *ellip* for Cauer filter, *bessel* for Bessel filter
         rp : int, optional
             the maximum ripple in the passband, in dB (for Chebyshev and elliptic filters only)
         rs : ints, optional
@@ -42,7 +42,7 @@ class LowPassFilter(Preprocessor):
         Parameters
         ----------
         data : pd.Series
-            EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the eda data to be filtered
+            EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), column is the eda data to be filtered
 
         Returns
         -------

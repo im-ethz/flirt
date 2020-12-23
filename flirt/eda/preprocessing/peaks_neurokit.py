@@ -34,7 +34,7 @@ class ComputeNeurokitPeaks(PeakFeatures):
         Parameters
         ----------
         data : pd.Series
-            relevant data onto which compute peak features , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica)
+            relevant data onto which compute peak features , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica)
 
         Returns
         -------

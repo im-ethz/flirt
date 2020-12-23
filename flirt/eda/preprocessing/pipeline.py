@@ -17,7 +17,7 @@ class MultiStepPipeline(Preprocessor):
         Parameters
         -----------
         artefacts_detection: class, optional
-            class determining the algorithm to use to detect artifacts: 'LR' for logistic regression from the Ideas Lab UT or 'Explorer' for SVM from the EDA Explorer team.
+            class determining the algorithm to use to detect artifacts: *LrDetector()* for logistic regression from the Ideas Lab UT or *MitExplorerDetector()* for SVM from the EDA Explorer team.
         signal_filter : class, optional
             class determining the low-pass filtering method to use to further clean the EDA signal
         """
@@ -31,7 +31,7 @@ class MultiStepPipeline(Preprocessor):
         Parameters
         ----------
         data : pd.Series
-            raw EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
+            raw EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), column is the raw eda data: `eda`
 
         Returns
         -------

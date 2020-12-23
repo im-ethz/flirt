@@ -7,11 +7,11 @@ from .low_pass import LowPassFilter
 from ..models.ledalab import leda2, utils, analyse, deconvolution
 
 class LedaLab(SignalDecomposition):
-    r""" This class decomposes the filtered EDA signal into tonic and phasic components using the Ledalab algorithm, adapted from MATLAB. It also \
+    """ This class decomposes the filtered EDA signal into tonic and phasic components using the Ledalab algorithm, adapted from MATLAB. It also \
     ensures that the tonic and phasic signals never drop below zero."""
 
     def __init__(self, sampling_rate: int=4, downsample: int=1, optimisation: int=0):
-        r""" Construct the signal decomposition model.
+        """ Construct the signal decomposition model.
 
         Parameters
         ----------- 
@@ -29,20 +29,20 @@ class LedaLab(SignalDecomposition):
         self.optimisation = optimisation
 
     def __process__(self, data: pd.Series) -> (pd.Series, pd.Series):
-        r"""
+        """
         Decompose electrodermal activity into phasic and tonic components.
 
         Parameters
         -----------
         data : pd.Series
-            filtered EDA data , index is a list of timestamps according on the sampling frequency (e.g. 4Hz for Empatica), \
+            filtered EDA data , index is a list of timestamps according to the sampling frequency (e.g. 4Hz for Empatica), \
             columns is the filtered eda data: `eda`
         
         Returns
         --------
         pd.Series, pd.Series
             two dataframes containing the phasic and the tonic components, index is a list of \
-                timestamps for both dataframes
+            timestamps for both dataframes
 
         Examples
         --------
