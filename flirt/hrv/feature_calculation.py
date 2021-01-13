@@ -105,6 +105,8 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
     if not isinstance(clean_data.index, pd.DatetimeIndex):
         clean_data.index = pd.DatetimeIndex(clean_data.index)
 
+    clean_data = clean_data[~clean_data.index.duplicated()]
+
     calculated_features = {}
 
     with Parallel(n_jobs=num_cores) as parallel:
@@ -120,15 +122,16 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     features = pd.concat(calculated_features.values(), axis=1, sort=True)
 
-    target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
-                                 end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size))
+    if not features.empty:
+        target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
+                                     end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size))
 
-    features = features.reindex(index=features.index.union(target_index))
+        features = features.reindex(index=features.index.union(target_index).drop_duplicates())
 
-    features.interpolate(method='time', limit=int((1 - threshold) * (window_length / window_step_size)), inplace=True)
-    features = features.reindex(target_index)
+        features.interpolate(method='time', limit=int((1 - threshold) * (window_length / window_step_size)), inplace=True)
+        features = features.reindex(target_index)
+
     features.index.name = 'datetime'
-
     return features
 
 
@@ -157,8 +160,12 @@ def __clean_artifacts(data: pd.Series, threshold=0.2) -> pd.Series:
 
     # efficiency instead of loop ;-)
     diff = data.diff().abs()
-    data.drop(data[diff > threshold * data].index, inplace=True)
-    data.drop(data[(data < 250) | (data > 2000)].index, inplace=True)  # drop by bpm > 240 or bpm < 30
+    drop_indices = diff > threshold * data
+    if drop_indices.any():
+        data.drop(data[drop_indices].index, inplace=True)
+    drop_indices = (data < 250) | (data > 2000)
+    if drop_indices.any():
+        data.drop(data[drop_indices].index, inplace=True)  # drop by bpm > 240 or bpm < 30
     data.dropna(inplace=True)  # just to be sure
 
     return data
@@ -176,7 +183,6 @@ def __generate_features_for_domain(clean_data: pd.Series, window_length: int, th
     features = pd.DataFrame(list(filter(None, features)))
     if not features.empty:
         features.set_index('datetime', inplace=True)
-        features.dropna(inplace=True)
         features.sort_index(inplace=True)
     return features
 
