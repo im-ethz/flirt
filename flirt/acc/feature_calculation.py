@@ -53,6 +53,10 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
     input_data = data.copy()
     input_data['l2'] = np.linalg.norm(data.to_numpy(), axis=1)
 
+    # ensure we have a DatetimeIndex, needed for calculation
+    if not isinstance(input_data.index, pd.DatetimeIndex):
+        input_data.index = pd.DatetimeIndex(input_data.index)
+
     inputs = trange(0, len(input_data) - 1,
                     window_step_size * data_frequency, desc="ACC features")  # advance by window_step_size * data_frequency
 

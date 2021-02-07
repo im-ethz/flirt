@@ -32,7 +32,6 @@ requirements = [
     "joblib",
     "tqdm>=4.43",
     "ishneholterlib",
-    "nolds",
     "numba",
     "astropy"
 ]

@@ -1,4 +1,4 @@
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # Maintainer info
 __author__ = "The FLIRT development team"
@@ -22,6 +22,7 @@ from .acc import get_acc_features
 from .eda import get_eda_features
 from .hrv import get_hrv_features
 from .stats import get_stat_features
+from .with_ import *
 
 # extra sub-packages
 # flirt.simple

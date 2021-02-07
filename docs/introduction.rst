@@ -5,16 +5,15 @@ FLIRT
 
 |Python Versions| |PyPI| |Documentation Status| |Binder|
 
-FLIRT is a feature generation toolkit for wearable data such as that
-from your smartwatch or smart ring. Here you can learn how to easily
-transform wearable data into meaningful features which can then be used
-for example in machine learning or AI models.
+⭐️ **Simple. Robust. Powerful.**
 
-In contrast to other existing toolkits, FLIRT (1) focuses on
-physiological data recorded with **consumer-grade wearables** and (2)
-calculates features based on a **sliding-window approach**. FLIRT is an
-easy-to-use, robust and efficient feature generation toolkit for your
-wearable device!
+FLIRT is a feature generation toolkit for wearable data such as that from your smartwatch or smart ring. With FLIRT you can
+easily transform wearable data into meaningful features which can then be used for example in machine learning or AI models.
+
+In contrast to other existing toolkits, FLIRT (1) focuses on physiological data recorded with
+(consumer) **wearables** and (2) calculates features based on a **sliding-window approach**.
+FLIRT is an easy-to-use, robust and efficient feature generation toolkit for your wearable device!
+
 
 .. figure:: img/flirt-workflow.png
    :alt: FLIRT Workflow
@@ -76,7 +75,7 @@ Check out the exemplary `Jupyter notebooks <https://github.com/im-ethz/flirt/tre
 Authors
 =======
 
-Made with ❤️ at `ETH Zurich <https://im.ethz.ch>`_ .
+Made with ❤️ at `ETH Zurich <https://im.ethz.ch>`_.
 
 Check out all :doc:`authors`.
 
@@ -85,7 +84,7 @@ FAQs
 
 -  **How does FLIRT distinguish from other physiological data processing
    packages such as neurokit?**  \
-   While FLIRT works with phsyological data like other packages, it
+   While FLIRT works with physiological data like other packages, it
    places special emphasis on the inherent challenges of data processing
    obtained from (consumer) wearable devices such as smartwaches instead
    of professional, medical-grade recording devices such as ECGs or

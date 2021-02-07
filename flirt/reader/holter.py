@@ -9,20 +9,21 @@ __all__ = [
 ]
 
 
-def get_starttime_from_holter(holter: Holter) -> datetime:
+def get_starttime_from_holter(holter_path: str) -> datetime:
     """
     Reads the start time of a holter file
 
     Parameters
     ----------
-    holter : Holter
-        the holter file
+    holter_path : str
+        path to the holter file
 
     Returns
     -------
     datetime
         the start datetime of the Holter file
     """
+    holter = Holter(holter_path)
     return datetime.combine(holter.record_date, holter.start_time)
 
 
