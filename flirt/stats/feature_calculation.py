@@ -8,7 +8,8 @@ from tqdm.autonotebook import trange
 from .common import get_stats
 
 
-def get_stat_features(data: pd.DataFrame, epoch_width: int = 60, num_cores: int = 0):
+def get_stat_features(data: pd.DataFrame, window_length: int = 60, window_step_size: int = 1, data_frequency: int = 32,
+                      num_cores: int = 0):
     """
     Computes several statistical and entropy-based time series features for each column in the provided DataFrame.
 
@@ -16,7 +17,7 @@ def get_stat_features(data: pd.DataFrame, epoch_width: int = 60, num_cores: int 
     ----------
     data : pd.DataFrame
         input time series
-    epoch_width : int
+    window_length : int
         the epoch width (aka window size) in seconds to consider
     num_cores : int, optional
         number of cores to use for parallel processing, by default use all available
@@ -44,11 +45,13 @@ def get_stat_features(data: pd.DataFrame, epoch_width: int = 60, num_cores: int 
     if not num_cores >= 1:
         num_cores = multiprocessing.cpu_count()
 
-    inputs = trange(0, len(data) - 1, 32, desc="Stat features")  # 32 Hz, calculate only once per second
+    input_data = data.copy()
+    inputs = trange(0, len(input_data) - 1,
+                    window_step_size * data_frequency, desc="Stat features")  # advance by window_step_size * data_frequency
 
     with Parallel(n_jobs=num_cores) as parallel:
         results = parallel(
-            delayed(__ts_features)(data, epoch_width=epoch_width, i=k) for k in inputs)
+            delayed(__ts_features)(input_data, epoch_width=window_length, i=k) for k in inputs)
 
     results = pd.DataFrame(list(filter(None, results)))
     results.set_index('datetime', inplace=True)
