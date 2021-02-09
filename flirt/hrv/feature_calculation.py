@@ -12,6 +12,16 @@ from .features.fd_features import FdFeatures
 from .features.nl_features import NonLinearFeatures
 from .features.td_features import TdFeatures
 from ..stats.common import get_stats
+from ..util import processing
+
+# disable astropy warnings
+try:
+    from astropy.utils.exceptions import AstropyWarning
+    import warnings
+
+    warnings.simplefilter('ignore', category=AstropyWarning)
+except:
+    pass
 
 # disable astropy warnings
 try:
@@ -107,18 +117,21 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     clean_data = clean_data[~clean_data.index.duplicated()]
 
-    calculated_features = {}
+    def process(memmap_data) -> dict:
+        results = {}
+        with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
+            for domain in domains:
+                if domain not in feature_functions.keys():
+                    raise ValueError("invalid feature domain: " + domain)
 
-    with Parallel(n_jobs=num_cores) as parallel:
-        for domain in domains:
-            if domain not in feature_functions.keys():
-                raise ValueError("invalid feature domain: " + domain)
+                # print("Calculate %s features" % domain)
 
-            #print("Calculate %s features" % domain)
+                feat = __generate_features_for_domain(memmap_data, window_length, threshold,
+                                                      feature_function=feature_functions[domain], parallel=parallel)
+                results[domain] = feat
+        return results
 
-            feat = __generate_features_for_domain(clean_data, window_length, threshold,
-                                                  feature_function=feature_functions[domain], parallel=parallel)
-            calculated_features[domain] = feat
+    calculated_features = processing.memmap_auto(clean_data, process)
 
     features = pd.concat(calculated_features.values(), axis=1, sort=True)
 

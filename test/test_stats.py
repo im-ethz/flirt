@@ -25,4 +25,4 @@ class IbiCalcTestCase(unittest.TestCase):
 
         #print(ibi.head())
 
-        self.assertEqual(8848, len(ibi))
+        self.assertEqual(8849, len(ibi))

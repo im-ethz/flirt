@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
+from util import processing
 
 from ..stats.common import get_stats
 
@@ -54,10 +55,13 @@ def get_eda_features(data: pd.Series, window_length: int = 60, window_step_size:
     if not num_cores >= 1:
         num_cores = multiprocessing.cpu_count()
 
-    with Parallel(n_jobs=num_cores) as parallel:
-        results = parallel(
-            delayed(__get_scr_scl)(input_data, window_length=window_length, data_frequency=data_frequency, i=k) for k in
-            inputs)
+    def process(memmap_data) -> dict:
+        with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
+            return parallel(delayed(__get_scr_scl)
+                            (memmap_data, window_length=window_length, data_frequency=data_frequency, i=k) for k in
+                            inputs)
+
+    results = processing.memmap_auto(input_data, process)
 
     results = pd.DataFrame(list(filter(None, results)))
     results.set_index('datetime', inplace=True)
@@ -67,9 +71,8 @@ def get_eda_features(data: pd.Series, window_length: int = 60, window_step_size:
         nan_count = results[column].isin([np.nan, np.inf, -np.inf]).sum()
         proportion = nan_count / len(results)
         if proportion > 0.05:
-            warnings.warn(str(column) + " contains more than 5% (actual: " + str((proportion*100).round(2))+"%) nan, inf, or -inf values. "
-                                                                                                            "We recommend to delete this feature column.",
-                          stacklevel=3)
+            warnings.warn(str(column) + " contains more than 5% (actual: " + str((proportion * 100).round(2))
+                          + "%) nan, inf, or -inf values. We recommend to delete this feature column.", stacklevel=3)
     return results
 
 

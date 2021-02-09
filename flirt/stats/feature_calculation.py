@@ -4,6 +4,7 @@ from datetime import timedelta
 import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
+from util import processing
 
 from .common import get_stats
 
@@ -49,9 +50,11 @@ def get_stat_features(data: pd.DataFrame, window_length: int = 60, window_step_s
     inputs = trange(0, len(input_data) - 1,
                     window_step_size * data_frequency, desc="Stat features")  # advance by window_step_size * data_frequency
 
-    with Parallel(n_jobs=num_cores) as parallel:
-        results = parallel(
-            delayed(__ts_features)(input_data, epoch_width=window_length, i=k) for k in inputs)
+    def process(memmap_data):
+        with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
+            return parallel(
+                delayed(__ts_features)(memmap_data, epoch_width=window_length, i=k) for k in inputs)
+    results = processing.memmap_auto(input_data, process)
 
     results = pd.DataFrame(list(filter(None, results)))
     results.set_index('datetime', inplace=True)

@@ -5,12 +5,13 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
+from util import processing
 
 from ..stats.common import get_stats
 
 
-def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: int = 1, data_frequency: int = 32,
-                     num_cores: int = 0):
+def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: float = 1,
+                     data_frequency: int = 32, num_cores: int = 0):
     """
     Computes statistical ACC features based on the l2-norm of the x-, y-, and z- acceleration.
 
@@ -60,9 +61,10 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
     inputs = trange(0, len(input_data) - 1,
                     window_step_size * data_frequency, desc="ACC features")  # advance by window_step_size * data_frequency
 
-    with Parallel(n_jobs=num_cores) as parallel:
-        results = parallel(
-            delayed(__get_l2_stats)(input_data, window_length=window_length, i=k) for k in inputs)
+    def process(memmap_data) -> dict:
+        with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
+            return parallel(delayed(__get_l2_stats)(memmap_data, window_length=window_length, i=k) for k in inputs)
+    results = processing.memmap_auto(input_data, process)
 
     results = pd.DataFrame(list(filter(None, results)))
     results.set_index('datetime', inplace=True)
