@@ -11,7 +11,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 def read(*parts):
-    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+    with codecs.open(os.path.join(here, *parts), 'r', encoding='utf-8') as fp:
         return fp.read()
 
 

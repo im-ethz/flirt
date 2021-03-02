@@ -1,6 +1,8 @@
 import tempfile
 import os
-from joblib import load, dump
+
+import time
+from joblib import load, dump, _memmapping_reducer
 
 # Some system have a ramdisk mounted by default, we can use it instead of /tmp
 # as the default folder to dump big arrays to share with subprocesses.
@@ -36,12 +38,32 @@ def memmap_data(data, read_only: bool = True):
     return load(filename, mmap_mode='r+' if read_only else 'w+'), filename
 
 
-def memmap_unlink(filename):
-    if os.path.exists(filename):
-        os.unlink(filename)
-
-
 # taken from https://github.com/joblib/joblib/blob/c952c223e3616e5ff10f63864b4615088b0d9352/joblib/_memmapping_reducer.py
+def memmap_unlink(filename):
+    """Wrapper around os.unlink with a retry mechanism.
+
+    The retry mechanism has been implemented primarily to overcome a race
+    condition happening during the finalizer of a np.memmap: when a process
+    holding the last reference to a mmap-backed np.memmap/np.array is about to
+    delete this array (and close the reference), it sends a maybe_unlink
+    request to the resource_tracker. This request can be processed faster than
+    it takes for the last reference of the memmap to be closed, yielding (on
+    Windows) a PermissionError in the resource_tracker loop.
+    """
+    if os.path.exists(filename):
+        NUM_RETRIES = 10
+        for retry_no in range(1, NUM_RETRIES + 1):
+            try:
+                os.unlink(filename)
+                break
+            except PermissionError:
+                if retry_no == NUM_RETRIES:
+                    print("Unable to remove memmapped file")
+                    break
+                else:
+                    time.sleep(.2)
+
+
 def __get_temp_dir(pool_folder_name, temp_folder=None):
     use_shared_mem = False
     if temp_folder is None:
