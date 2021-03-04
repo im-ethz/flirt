@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .data_utils import ArtefactsDetection
-from ..models import custom_featurematrix
+from ..models.custom_featurematrix import feature_matrix
 from ..models.eda_explorer.EDA_Artifact_Detection_Script import eda_explorer_artifact 
 
 class LrDetector(ArtefactsDetection):
@@ -51,7 +51,7 @@ class LrDetector(ArtefactsDetection):
         
         """
 
-        _, eda_features = custom_featurematrix.feature_matrix(data)
+        _, eda_features = feature_matrix(data)
 
         # Retrieve data from pandas dataframe
         eda = data
