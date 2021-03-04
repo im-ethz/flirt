@@ -37,7 +37,7 @@ requirements = [
     "sympy",
     "glob2",
     "lightgbm",
-    "pwt",
+    "PyWavelets",
     "pyparticleest"
 ]
 
