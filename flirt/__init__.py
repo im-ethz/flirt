@@ -1,4 +1,4 @@
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 # Maintainer info
 __author__ = "The FLIRT development team"
