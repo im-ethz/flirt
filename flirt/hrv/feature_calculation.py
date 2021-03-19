@@ -1,6 +1,7 @@
 import datetime
 import multiprocessing
 from typing import List
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -17,17 +18,6 @@ from ..util import processing
 # disable astropy warnings
 try:
     from astropy.utils.exceptions import AstropyWarning
-    import warnings
-
-    warnings.simplefilter('ignore', category=AstropyWarning)
-except:
-    pass
-
-# disable astropy warnings
-try:
-    from astropy.utils.exceptions import AstropyWarning
-    import warnings
-
     warnings.simplefilter('ignore', category=AstropyWarning)
 except:
     pass
@@ -117,11 +107,19 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     clean_data = clean_data[~clean_data.index.duplicated()]
 
+    # before starting calculations, make sure that there actually is some data left
+    if clean_data.empty:
+        warnings.warn(f'Empty dataset after cleaning: 0 of {len(data)} rows left), returning empty features dataframe',
+                      stacklevel=3)
+        return pd.DataFrame.empty
+
     window_length_timedelta = pd.to_timedelta(window_length, unit='s')
     window_step_size_timedelta = pd.to_timedelta(window_step_size, unit='s')
 
-    target_index = pd.date_range(start=clean_data.index[0].floor('s'),
-                                 end=clean_data.index[-1].ceil('s') - window_length_timedelta,
+    first_index = clean_data.index[0].floor('s')
+    last_index = clean_data.index[-1].ceil('s')
+    target_index = pd.date_range(start=first_index,
+                                 end=max(first_index, last_index - window_length_timedelta),
                                  freq=window_step_size_timedelta)
 
     def process(memmap_data) -> pd.DataFrame:
@@ -160,13 +158,6 @@ def __clean_artifacts(data: pd.Series, threshold=0.2) -> pd.Series:
         the cleaned IBIs
     """
 
-    # Artifact detection - Statistical
-    # for index in trange(data.shape[0]):
-    #    # Remove RR intervals that differ more than 20% from the previous one
-    #    if np.abs(data.iloc[index] - data.iloc[index - 1]) > 0.2 * data.iloc[index]:
-    #        data.iloc[index] = np.nan
-
-    # efficiency instead of loop ;-)
     diff = data.diff().abs()
     drop_indices = diff > threshold * data
     if drop_indices.any():
