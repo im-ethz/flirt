@@ -1,11 +1,12 @@
+import datetime
 import multiprocessing
-from datetime import timedelta
 from typing import List
+import warnings
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from tqdm.autonotebook import trange
+from tqdm import tqdm
 
 from .features.data_utils import DomainFeatures
 from .features.fd_features import FdFeatures
@@ -17,17 +18,6 @@ from ..util import processing
 # disable astropy warnings
 try:
     from astropy.utils.exceptions import AstropyWarning
-    import warnings
-
-    warnings.simplefilter('ignore', category=AstropyWarning)
-except:
-    pass
-
-# disable astropy warnings
-try:
-    from astropy.utils.exceptions import AstropyWarning
-    import warnings
-
     warnings.simplefilter('ignore', category=AstropyWarning)
 except:
     pass
@@ -41,7 +31,7 @@ class StatFeatures(DomainFeatures):
         return get_stats(data, 'hrv')
 
 
-feature_functions = {
+FEATURE_FUNCTIONS = {
     'td': TdFeatures(),
     'fd': FdFeatures(sampling_frequency=1, method='lomb'),
     'stat': StatFeatures(),
@@ -117,34 +107,37 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     clean_data = clean_data[~clean_data.index.duplicated()]
 
-    def process(memmap_data) -> dict:
-        results = {}
+    # before starting calculations, make sure that there actually is some data left
+    if clean_data.empty:
+        warnings.warn(f'Empty dataset after cleaning: 0 of {len(data)} rows left), returning empty features dataframe',
+                      stacklevel=3)
+        return pd.DataFrame.empty
+
+    window_length_timedelta = pd.to_timedelta(window_length, unit='s')
+    window_step_size_timedelta = pd.to_timedelta(window_step_size, unit='s')
+
+    first_index = clean_data.index[0].floor('s')
+    last_index = clean_data.index[-1].ceil('s')
+    target_index = pd.date_range(start=first_index,
+                                 end=max(first_index, last_index - window_length_timedelta),
+                                 freq=window_step_size_timedelta)
+
+    def process(memmap_data) -> pd.DataFrame:
         with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
             for domain in domains:
-                if domain not in feature_functions.keys():
+                if domain not in FEATURE_FUNCTIONS.keys():
                     raise ValueError("invalid feature domain: " + domain)
 
-                # print("Calculate %s features" % domain)
+            return __generate_features_for_domain(memmap_data, target_index, window_length_timedelta, threshold,
+                                                  feature_functions=[FEATURE_FUNCTIONS.get(x) for x in domains],
+                                                  parallel=parallel)
 
-                feat = __generate_features_for_domain(memmap_data, window_length, threshold,
-                                                      feature_function=feature_functions[domain], parallel=parallel)
-                results[domain] = feat
-        return results
+    features = processing.memmap_auto(clean_data, process)
 
-    calculated_features = processing.memmap_auto(clean_data, process)
-
-    features = pd.concat(calculated_features.values(), axis=1, sort=True)
-
-    if not features.empty:
-        target_index = pd.date_range(start=features.iloc[0].name.ceil('s'),
-                                     end=features.iloc[-1].name.floor('s'), freq='%ds' % (window_step_size))
-
-        features = features.reindex(index=features.index.union(target_index).drop_duplicates())
-
-        features.interpolate(method='time', limit=int((1 - threshold) * (window_length / window_step_size)), inplace=True)
-        features = features.reindex(target_index)
-
-    features.index.name = 'datetime'
+    # only interpolate if there are overlapping time windows
+    if window_length_timedelta > window_step_size_timedelta:
+        limit = max(1, int((1 - threshold) * (window_length / window_step_size)))
+        features.interpolate(method='time', limit=limit, inplace=True)
     return features
 
 
@@ -165,13 +158,6 @@ def __clean_artifacts(data: pd.Series, threshold=0.2) -> pd.Series:
         the cleaned IBIs
     """
 
-    # Artifact detection - Statistical
-    # for index in trange(data.shape[0]):
-    #    # Remove RR intervals that differ more than 20% from the previous one
-    #    if np.abs(data.iloc[index] - data.iloc[index - 1]) > 0.2 * data.iloc[index]:
-    #        data.iloc[index] = np.nan
-
-    # efficiency instead of loop ;-)
     diff = data.diff().abs()
     drop_indices = diff > threshold * data
     if drop_indices.any():
@@ -184,14 +170,15 @@ def __clean_artifacts(data: pd.Series, threshold=0.2) -> pd.Series:
     return data
 
 
-def __generate_features_for_domain(clean_data: pd.Series, window_length: int, threshold: float,
-                                   feature_function: DomainFeatures, parallel: Parallel) -> pd.DataFrame:
-    inputs = trange(len(clean_data) - 1, desc="HRV %s features " % feature_function.__get_type__())
+def __generate_features_for_domain(clean_data: pd.Series, target_index: pd.DatetimeIndex,
+                                   window_length: datetime.timedelta, threshold: float,
+                                   feature_functions: List[DomainFeatures], parallel: Parallel) -> pd.DataFrame:
+    inputs = tqdm(target_index, desc="HRV features")
 
     features = parallel(delayed(__calculate_hrv_features)
-                        (clean_data, i=k, window_length=window_length,
+                        (clean_data, start_datetime=k, window_length=window_length,
                          threshold=threshold,
-                         feature_function=feature_function)
+                         feature_functions=feature_functions)
                         for k in inputs)
     features = pd.DataFrame(list(filter(None, features)))
     if not features.empty:
@@ -200,18 +187,18 @@ def __generate_features_for_domain(clean_data: pd.Series, window_length: int, th
     return features
 
 
-def __calculate_hrv_features(data: pd.Series, window_length: int, i: int, threshold: float,
-                             feature_function: DomainFeatures):
-    # first check if there is at least one IBI in the epoch
-    if pd.Timedelta(data.index[i + 1] - data.index[i]).total_seconds() <= window_length:
-        min_timestamp = data.index[i]
-        max_timestamp = min_timestamp + timedelta(seconds=window_length)
-        relevant_data = data.loc[(data.index >= min_timestamp) & (data.index < max_timestamp)]
+def __calculate_hrv_features(data: pd.Series, window_length: datetime.timedelta, start_datetime: datetime.datetime,
+                             threshold: float, feature_functions: List[DomainFeatures]):
+    relevant_data = data.loc[(data.index >= start_datetime) & (data.index < start_datetime + window_length)]
 
-        expected_length = (window_length / (relevant_data.mean() / 1000))
+    return_val = {'datetime': start_datetime + window_length, "num_ibis": len(relevant_data)}
+    # first check if there is at least one IBI in the epoch
+    if len(relevant_data) > 0:
+        expected_length = (window_length.total_seconds() / (relevant_data.mean() / 1000))
         actual_length = len(relevant_data)
 
         if actual_length >= (expected_length * threshold):
-            return {'datetime': max_timestamp, **feature_function.__generate__(relevant_data)}
+            for feature_function in feature_functions:
+                return_val.update(feature_function.__generate__(relevant_data))
 
-    return None
+    return return_val

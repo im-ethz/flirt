@@ -42,11 +42,17 @@ class EmpaticaTSFeatureTestCase(unittest.TestCase):
 class EmpaticaIbiTestCase(unittest.TestCase):
     def test_load_data(self):
         ibi = flirt.reader.empatica.read_ibi_file_into_df('wearable-data/empatica/IBI.csv')
-        ibi = flirt.get_hrv_features(ibi['ibi'], 180, 1, ['td', 'fd', 'nl', 'stat'], 0.5)
+        ibi = flirt.get_hrv_features(ibi['ibi'], 180, 1, ['td', 'fd', 'nl', 'stat'], 0.5, num_cores=1)
 
         # print(ibi.head())
 
-        self.assertEqual(8482, len(ibi))
+        self.assertEqual(8673, len(ibi))
+
+    def test_nonoverlapping_windows(self):
+        ibi = flirt.reader.empatica.read_ibi_file_into_df('wearable-data/empatica/IBI.csv')
+        ibi = flirt.get_hrv_features(ibi['ibi'], 300, 300, ['td', 'fd', 'nl', 'stat'], 0.5, num_cores=1)
+
+        self.assertEqual(29, len(ibi))
 
     def test_illegal_domain(self):
         self.assertRaisesRegex(ValueError, 'invalid feature domain: foo', flirt.get_hrv_features, pd.Series(), 180, 1,

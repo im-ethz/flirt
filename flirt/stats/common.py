@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.signal import find_peaks
 from scipy.stats import skew, kurtosis, iqr
@@ -29,6 +31,12 @@ FUNCTIONS = {
 
 def get_stats(data, key_suffix: str = None, entropies: bool = True):
     data = np.asarray(data)
+
+    data_nans = np.isnan(data)
+    if np.any(data_nans):
+        warnings.warn(f'input data contains {np.count_nonzero(data_nans)} NaNs which will be removed')
+    data = data[~np.isnan(data)]
+
     results = {}
     if len(data) > 0:
         for key, value in FUNCTIONS.items():
