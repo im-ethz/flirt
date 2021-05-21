@@ -7,11 +7,13 @@ from joblib import Parallel, delayed
 from tqdm.autonotebook import trange
 from ..util import processing
 
+from .preprocessing import data_utils, LowPassFilter, ParticleFilter
 from ..stats.common import get_stats
+from .preprocessing import get_MFCC_stats, get_fd_stats
 
 
 def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: float = 1,
-                     data_frequency: int = 32, num_cores: int = 0):
+                     data_frequency: int = 32, num_cores: int = 0, preprocessor: data_utils.Preprocessor = LowPassFilter()):
     """
     Computes statistical ACC features based on the l2-norm of the x-, y-, and z- acceleration.
 
@@ -27,11 +29,13 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
         the frequency of the input signal
     num_cores : int, optional
         number of cores to use for parallel processing, by default use all available
+    preprocessor: class, optional
+        the method chosen to clean the data: low-pass filtering, particle filtering
 
     Returns
     -------
     ACC Features: pd.DataFrame
-        A DataFrame containing statistical aggregation features.
+        A DataFrame containing time-domain, peak and frequency-domain aggregation features.
 
     Notes
     -----
@@ -40,6 +44,9 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
         - **Statistical Features**: acc_entropy, acc_perm_entropy, acc_svd_entropy, acc_mean, \
         acc_min, acc_max, acc_ptp, acc_sum, acc_energy, acc_skewness, acc_kurtosis, acc_peaks, acc_rms, acc_lineintegral, \
         acc_n_above_mean, acc_n_below_mean, acc_iqr, acc_iqr_5_95, acc_pct_5, acc_pct_95
+        - **Frequency-Domain Features**: fd_sma, fd_energy, fd_varPower, fd_Power_0.05, fd_Power_0.15, fd_Power_0.25, fd_Power_0.35, \
+        fd_Power_0.45, fd_kurtosis, fd_iqr, 
+        - **Time-Frequency-Domain Features**: mfcc_mean, mfcc_std, mfcc_median, mfcc_skewness, mfcc_kurtosis, mfcc_iqr
 
     Examples
     --------
@@ -52,7 +59,13 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
         num_cores = multiprocessing.cpu_count()
 
     input_data = data.copy()
-    input_data['l2'] = np.linalg.norm(data.to_numpy(), axis=1)
+
+    # Filter Data in all three ACC directions: x, y, z
+    for column in relevant_data.columns:
+        input_data[column] = preprocessor.__process__(data[column])
+
+    # Find ACC norm after filtering
+    input_data['l2'] = np.linalg.norm(input_data.to_numpy(), axis=1)
 
     # ensure we have a DatetimeIndex, needed for calculation
     if not isinstance(input_data.index, pd.DatetimeIndex):
@@ -84,8 +97,12 @@ def __get_l2_stats(data: pd.DataFrame, window_length: int, i: int):
         relevant_data = data.loc[(data.index >= min_timestamp) & (data.index < max_timestamp)]
 
         for column in relevant_data.columns:
-            column_results = get_stats(relevant_data[column], column)
-            results.update(column_results)
+            column_results_tdStats = get_stats(relevant_data[column], column)
+            column_results_fdStats = get_fd_stats(relevant_data[column], column)
+            column_results_mfccStats = get_MFCC_stats(relevant_data[column], column)
+            results.update(column_results_tdStats)
+            results.update(column_results_fdStats)
+            results.update(column_results_mfccStats)
 
         return results
 
