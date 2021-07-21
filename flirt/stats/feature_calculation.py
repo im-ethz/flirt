@@ -3,14 +3,14 @@ from datetime import timedelta
 
 import pandas as pd
 from joblib import Parallel, delayed
-from tqdm.autonotebook import trange
+from tqdm.autonotebook import trange, tqdm
 from ..util import processing
 
 from .common import get_stats
 
 
 def get_stat_features(data: pd.DataFrame, window_length: int = 60, window_step_size: int = 1, data_frequency: int = 32,
-                      entropies: bool = True, num_cores: int = 0):
+                      custom_range = None, entropies: bool = True, num_cores: int = 0):
     """
     Computes several statistical and entropy-based time series features for each column in the provided DataFrame.
 
@@ -49,8 +49,12 @@ def get_stat_features(data: pd.DataFrame, window_length: int = 60, window_step_s
         num_cores = multiprocessing.cpu_count()
 
     input_data = data.copy()
-    # advance by window_step_size * data_frequency
-    inputs = trange(0, len(input_data) - 1, window_step_size * data_frequency, desc="Stat features")
+    
+    if custom_range is None:
+        # advance by window_step_size * data_frequency
+        inputs = trange(0, len(input_data) - 1, window_step_size * data_frequency, desc="Stat features")
+    else:
+        inputs = tqdm(custom_range, desc="Stat features")
 
     def process(memmap_data):
         with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:

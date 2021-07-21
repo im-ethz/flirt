@@ -39,7 +39,7 @@ FEATURE_FUNCTIONS = {
 }
 
 
-def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size: int = 1,
+def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size: int = 1, custom_range = None,
                      domains: List[str] = ['td', 'fd', 'stat'], threshold: float = 0.2,
                      clean_data: bool = True, num_cores: int = 0):
     """
@@ -118,9 +118,13 @@ def get_hrv_features(data: pd.Series, window_length: int = 180, window_step_size
 
     first_index = clean_data.index[0].floor('s')
     last_index = clean_data.index[-1].ceil('s')
-    target_index = pd.date_range(start=first_index,
-                                 end=max(first_index, last_index - window_length_timedelta),
-                                 freq=window_step_size_timedelta)
+    
+    if custom_range is None:
+        target_index = pd.date_range(start=first_index,
+                                     end=max(first_index, last_index - window_length_timedelta),
+                                     freq=window_step_size_timedelta)
+    else:
+        target_index = first_index + pd.to_timedelta(custom_range, unit='s')
 
     def process(memmap_data) -> pd.DataFrame:
         with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
