@@ -13,7 +13,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
                                       hrv_features: bool = True,
                                       eda_features: bool = True,
                                       acc_features: bool = True,
-                                      debug: bool = False) -> pd.DataFrame:
+                                      debug: bool = False,
+                                      num_cores: int = 0) -> pd.DataFrame:
     """
     This function provides a standard set of HRV, EDA, ACC features for a given Empatica archive \
     (e.g. downloaded from E4 connect)
@@ -34,6 +35,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
         whether ACC features should be calculated from the archive
     debug : bool
         whether debug output should be printed
+    num_cores : int, optional
+        number of cores to use for parallel processing, by default use all available
 
     Returns
     -------
@@ -52,6 +55,9 @@ def get_features_for_empatica_archive(zip_file_path: str,
     if debug:
         print("Reading files")
 
+    if not num_cores >= 1:
+        num_cores = multiprocessing.cpu_count()
+
     df_hrv_features = pd.DataFrame()
     df_eda_features = pd.DataFrame()
     df_acc_features = pd.DataFrame()
@@ -64,7 +70,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
             if debug:
                 print("Calculating HRV features")
             df_hrv_features = flirt.hrv.get_hrv_features(ibi_data.iloc[:, 0], window_length=window_length,
-                                                         window_step_size=window_step_size)
+                                                         window_step_size=window_step_size,
+                                                         num_cores = num_cores)
 
         if eda_features:
             with zip_file.open("EDA.csv") as f:
@@ -73,7 +80,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
                 if debug:
                     print("Calculating EDA features")
                 df_eda_features = flirt.eda.get_eda_features(eda_data.iloc[:, 0], window_length=window_length,
-                                                             window_step_size=window_step_size).add_prefix('eda_')
+                                                             window_step_size=window_step_size,
+                                                             num_cores = num_cores).add_prefix('eda_')
 
         if acc_features:
             with zip_file.open("ACC.csv") as f:
@@ -82,7 +90,8 @@ def get_features_for_empatica_archive(zip_file_path: str,
                 if debug:
                     print("Calculating ACC features")
                 df_acc_features = flirt.acc.get_acc_features(acc_data[:], window_length=window_length,
-                                                             window_step_size=window_step_size).add_prefix('acc_')
+                                                             window_step_size=window_step_size,
+                                                             num_cores = num_cores).add_prefix('acc_')
 
         return __merge_features(df_hrv_features, df_eda_features, df_acc_features, freq='%ds' % window_step_size)
 
