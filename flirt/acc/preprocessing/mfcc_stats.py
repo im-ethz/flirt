@@ -16,7 +16,7 @@ def __real_cestrum(data):
     ceps = ifft(np.log(np.abs(spectrum))).real
     return ceps
 
-def get_MFCC_stats(data, key_suffix: str = None):
+def get_mfcc_stats(data, key_suffix: str = None):
     """ 
     Function that computes the Mel-Frequency Cepstrum Components (MFCC) features.
     

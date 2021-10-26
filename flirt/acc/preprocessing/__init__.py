@@ -6,6 +6,6 @@ from .particleFilter import ParticleFilter
 __all__ = [
     "LowPassFilter",
     "get_fd_stats",
-    "get_MFCC_stats",
+    "get_mfcc_stats",
     "ParticleFilter",
 ]

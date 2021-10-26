@@ -9,11 +9,12 @@ from ..util import processing
 
 from .preprocessing import data_utils, LowPassFilter, ParticleFilter
 from ..stats.common import get_stats
-from .preprocessing import get_MFCC_stats, get_fd_stats
+from .preprocessing import get_mfcc_stats, get_fd_stats
 
 
 def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_size: float = 1,
-                     data_frequency: int = 32, num_cores: int = 0, preprocessor: data_utils.Preprocessor = LowPassFilter()):
+                     data_frequency: int = 32, num_cores: int = 0,
+                     preprocessor: data_utils.Preprocessor = LowPassFilter()):
     """
     Computes statistical ACC features based on the l2-norm of the x-, y-, and z- acceleration.
 
@@ -72,11 +73,13 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
         input_data.index = pd.DatetimeIndex(input_data.index)
 
     inputs = trange(0, len(input_data) - 1,
-                    window_step_size * data_frequency, desc="ACC features")  # advance by window_step_size * data_frequency
+                    window_step_size * data_frequency,
+                    desc="ACC features")  # advance by window_step_size * data_frequency
 
     def process(memmap_data) -> dict:
         with Parallel(n_jobs=num_cores, max_nbytes=None) as parallel:
             return parallel(delayed(__get_l2_stats)(memmap_data, window_length=window_length, i=k) for k in inputs)
+
     results = processing.memmap_auto(input_data, process)
 
     results = pd.DataFrame(list(filter(None, results)))
@@ -97,12 +100,12 @@ def __get_l2_stats(data: pd.DataFrame, window_length: int, i: int):
         relevant_data = data.loc[(data.index >= min_timestamp) & (data.index < max_timestamp)]
 
         for column in relevant_data.columns:
-            column_results_tdStats = get_stats(relevant_data[column], column)
-            column_results_fdStats = get_fd_stats(relevant_data[column], column)
-            column_results_mfccStats = get_MFCC_stats(relevant_data[column], column)
-            results.update(column_results_tdStats)
-            results.update(column_results_fdStats)
-            results.update(column_results_mfccStats)
+            column_results_td_stats = get_stats(relevant_data[column], column)
+            column_results_fd_stats = get_fd_stats(relevant_data[column], column)
+            column_results_mfcc_stats = get_mfcc_stats(relevant_data[column], column)
+            results.update(column_results_td_stats)
+            results.update(column_results_fd_stats)
+            results.update(column_results_mfcc_stats)
 
         return results
 

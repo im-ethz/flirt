@@ -6,6 +6,7 @@ import pyparticleest.simulator as simulator
 
 from .data_utils import Preprocessor
 
+
 class Model(interfaces.ParticleFiltering):
     """ x_{k+1} = x_k + v_k, v_k ~ N(0,Q)
         y_k = x_k + e_k, e_k ~ N(0,R),
@@ -50,8 +51,8 @@ class ParticleFilter(Preprocessor):
     """ This class filters the raw ACC data using Particle Filter algorithm, reducing the measurement noise and eliminating motion artifacts. 
     """
 
-    def __init__(self, num_particles: int = 80, num_smoothers: int = 40, P0_variance: float = 0.02, 
-                Q_variance: float = 0.02, R_variance: float = 0.06):
+    def __init__(self, num_particles: int = 80, num_smoothers: int = 40, P0_variance: float = 0.02,
+                 Q_variance: float = 0.02, R_variance: float = 0.06):
         """ Consruct the Particle filtering model.
         Parameters
         -----------
@@ -101,11 +102,11 @@ class ParticleFilter(Preprocessor):
 
         acc = np.ravel(data)
         acc_len = len(acc)
-        
+
         model = Model(self.P0, self.Q, self.R)
         sim = simulator.Simulator(model, u=None, y=acc)
 
-        sim.simulate(self.num_particles, self.num_smoothers, filter='PF', smoother='full', meas_first = False)
+        sim.simulate(self.num_particles, self.num_smoothers, filter='PF', smoother='full', meas_first=False)
 
         vals_mean = sim.get_filtered_mean()
         particle_filtered = vals_mean[:-1, 0]
