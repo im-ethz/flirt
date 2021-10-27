@@ -3,6 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/flirt.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/flirt/)
 [![Documentation Status](https://readthedocs.org/projects/flirt/badge/?version=latest)](https://flirt.readthedocs.io/en/latest/?badge=latest)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/im-ethz/flirt/master)
+[![DOI](https://img.shields.io/badge/DOI-10.1016/j.cmpb.2021.106461-red.svg)](https://doi.org/10.1016/j.cmpb.2021.106461)
 
 ![](https://github.com/im-ethz/flirt/raw/master/docs/img/flirt-header.png)
 
@@ -77,3 +78,16 @@ Check out all [authors](https://github.com/im-ethz/flirt/tree/master/docs/author
     medical-grade recording devices such as ECGs or EEGs. As an example, when processing data from smartwatches, one
     could be confronted with inaccurate data, which needs artifact removal, or measurement gaps, which need to be
     dealt with.
+    
+# Citation
+Original article: [FLIRT: A Feature Generation Toolkit for Wearable Data](https://doi.org/10.1016/j.cmpb.2021.106461)
+
+```
+@article{flirt2021,
+  title={{{FLIRT}}: A {{Feature Generation Toolkit}} for {{Wearable Data}}},
+  author={Föll, Simon and Maritsch, Martin and Spinola, Federica and Mishra, Varun and Barata, Filipe and Kowatsch, Tobias and Fleisch, Elgar and Wortmann, Felix},
+  year={2021},
+  journal={Computer Methods and Programs in Biomedicine},
+  doi={10.1016/j.cmpb.2021.106461},
+}
+```
