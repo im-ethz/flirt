@@ -3,7 +3,7 @@ FLIRT
 
 .. image:: img/flirt-header.png
 
-|Python Versions| |PyPI| |Documentation Status| |Binder|
+|Python Versions| |PyPI| |Documentation Status| |Binder| |DOI|
 
 ⭐️ **Simple. Robust. Powerful.**
 
@@ -91,6 +91,22 @@ FAQs
    EEGs. As an example, when processing data from smartwatches, one
    could be confronted with inaccurate data, which needs artifact
    removal, or measurement gaps, which need to be dealt with.
+   
+Citation
+========
+
+Original article: `FLIRT: A Feature Generation Toolkit for Wearable Data <https://doi.org/10.1016/j.cmpb.2021.106461>`_
+
+::
+
+   @article{flirt2021,
+       title={{{FLIRT}}: A {{Feature Generation Toolkit}} for {{Wearable Data}}},
+       author={Föll, Simon and Maritsch, Martin and Spinola, Federica and Mishra, Varun and Barata, Filipe and Kowatsch, Tobias and Fleisch, Elgar and Wortmann, Felix},
+       year={2021},
+       journal={Computer Methods and Programs in Biomedicine},
+       doi={10.1016/j.cmpb.2021.106461},
+   }
+   
 
 .. |Python Versions| image:: https://img.shields.io/pypi/pyversions/flirt.svg?logo=python&logoColor=FFE873
    :target: https://pypi.org/project/flirt/
@@ -100,3 +116,5 @@ FAQs
    :target: https://flirt.readthedocs.io/en/latest/?badge=latest
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/im-ethz/flirt/master
+.. |DOI| image:: https://img.shields.io/badge/DOI-10.1016/j.cmpb.2021.106461-red.svg
+   :target: https://doi.org/10.1016/j.cmpb.2021.106461
