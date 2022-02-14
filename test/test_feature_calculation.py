@@ -55,7 +55,8 @@ class EmpaticaIbiTestCase(unittest.TestCase):
         self.assertEqual(29, len(ibi))
 
     def test_illegal_domain(self):
-        self.assertRaisesRegex(ValueError, 'invalid feature domain: foo', flirt.get_hrv_features, pd.Series(), 180, 1,
+        ibi = flirt.reader.empatica.read_ibi_file_into_df('wearable-data/empatica/IBI.csv')
+        self.assertRaisesRegex(ValueError, 'invalid feature domain: foo', flirt.get_hrv_features, ibi, 180, 1,
                                ['foo'], 0.5)
 
 

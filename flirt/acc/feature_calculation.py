@@ -62,7 +62,7 @@ def get_acc_features(data: pd.DataFrame, window_length: int = 60, window_step_si
     input_data = data.copy()
 
     # Filter Data in all three ACC directions: x, y, z
-    for column in relevant_data.columns:
+    for column in input_data.columns:
         input_data[column] = preprocessor.__process__(data[column])
 
     # Find ACC norm after filtering
