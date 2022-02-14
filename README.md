@@ -66,10 +66,14 @@ Things FLIRT will be able to do in the future:
   - [ ] Use FLIRT with Apple Health to derive meaningful features from long-term data recordings
   - [ ] Feature generation for additional sensor modalities such as: blood oxygen saturation, blood volume changes, respiration rate, and step counts
 
-# Authors
-Made with ❤️ at [ETH Zurich](https://im.ethz.ch).
-
+# People
+Made with ❤️ at [ETH Zurich](https://im.ethz.ch).  
 Check out all [authors](https://github.com/im-ethz/flirt/tree/master/docs/authors.rst).
+
+In collaboration with the [Digital Biomarker Discovery Pipeline](https://dbdp.org).  
+[<img src="https://dbdp.org/assets/dbdp/DBDP_logo_2.jpg" width=150>](https://dbdp.org)
+
+
 
 # FAQs
 - **How does FLIRT distinguish from other physiological data processing packages such as neurokit?**  \

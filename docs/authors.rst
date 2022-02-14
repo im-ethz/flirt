@@ -7,12 +7,16 @@ Core Team
 - `Simon Föll <sfoell@ethz.ch>`_ (ETH Zurich)
 - `Prof. Dr. Elgar Fleisch <efleisch@ethz.ch>`_ (ETH Zurich & University of St. Gallen)
 - `Ass. Prof. Dr. Tobias Kowatsch <tkowatsch@ethz.ch>`_ (ETH Zurich & University of St. Gallen)
-- `Ass. Prof. Dr. Felix Wortmann <felix.wortmann@unisg.ch>`_ (University of St. Gallen)
+- `Prof. Dr. Felix Wortmann <felix.wortmann@unisg.ch>`_ (University of St. Gallen)
 
+Collaborators
+-------------
+- `Prof. Dr. Varun Mishra <https://varunmishra.com>`_ (Northeastern University)
+- `Digital Biomarker Discovery Pipeline <https://dbdp.org>`_ (Duke University)
 
 Further Contributors
 --------------------
--  Federica Spinola (ETH Zurich)
+- Federica Spinola (ETH Zurich)
 
 
 A joint initiative of the `Chair of Information Management <https://im.ethz.ch>`_ at `ETH Zurich <https://ethz.ch>`_ and
