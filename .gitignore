@@ -1,0 +1,10 @@
+.DS_Store
+test_save/
+
+tmp/
+__pycache__/*
+*/__pycache__/*
+
+build/
+dist/
+*.spec
