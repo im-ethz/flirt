@@ -98,13 +98,21 @@ class CalibGUI(tk.Frame):
             column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         curr_row += 1
 
-        # Button add points 
+        # Button load points
         self.button_images = ttk.Button(
             master,
             text='Points',
             command=self.load_point_data
         ).grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        
+        # Button load parameters
+        self.button_images = ttk.Button(
+            master,
+            text='Parameters',
+            command=self.load_parameters
+        ).grid(
+            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         curr_row += 1
 
         # Window 1 Text box
@@ -674,6 +682,32 @@ class CalibGUI(tk.Frame):
         #     20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
         #     33, 35, 36, 38, 39, 40, 41, 42,
         #     43, 44, 45, 47, 48, 49, 51, 52]
+
+        self.update_text_dialogs()
+        self.redraw_points()
+        self.update_point_list()
+    
+    def load_parameters(self,):
+        parameter_filepaths = fd.askopenfilenames(
+            filetypes=npy_filetypes, parent=self.master, title='Choose file')
+        # TODO: Might break on Windows?
+        param_file_names = [f.split('/')[-1] for f in parameter_filepaths]
+        file_base = [os.path.splitext(f)[0] for f in self.img_files]
+
+        for param_filepath, param_filename in zip(parameter_filepaths, param_file_names):
+            param_file_base = os.path.splitext(param_filename)[0]
+            if param_file_base in file_base:
+                # Load the parameters
+                parameters = np.load(param_filepath)
+                # Get the index
+                idx = file_base.index(param_file_base)
+                # Put them into the self.calib
+                self.calib_param[idx] = parameters
+                # Add to self.calibrated
+                if not idx in self.calibrated:
+                    self.calibrated.append(idx)
+            else:
+                print('Ignoring paramter: {}'.format(param_filename))
 
         self.update_text_dialogs()
         self.redraw_points()
