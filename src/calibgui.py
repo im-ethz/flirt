@@ -609,11 +609,9 @@ class CalibGUI(tk.Frame):
         self.canvas_minimap.update()
 
     def save_state(self, event):
-        # Select folder if not selected
-        self.save_dir = fd.askdirectory()
-
         if self.save_dir == None:
-            return
+            self.save_dir = fd.askdirectory()
+        
         state = {}
         state['img_filepaths'] = self.img_filepaths
         state['img_files'] = self.img_files
@@ -627,19 +625,26 @@ class CalibGUI(tk.Frame):
         state['point_data'] = self.point_data
         state['calibrated'] = self.calibrated
         state['calib_param'] = self.calib_param
+        
+        filenames = [os.path.splitext(f)[0] for f in self.img_files + [self.minimap_filename]]
+        folder_name = "_".join(filenames)
 
+        state_folder_path = os.path.join(self.save_dir, folder_name)
+        if not os.path.exists(state_folder_path):
+            os.makedirs(state_folder_path)
+        
         # Store the state
-        state_path = os.path.join(self.save_dir, 'state.npy')
+        state_path = os.path.join(state_folder_path, 'state.npy')
         np.save(state_path, state)
 
         # Store the point data
-        point_data_path = os.path.join(self.save_dir, 'cam.npy')
+        point_data_path = os.path.join(state_folder_path, 'cam.npy')
         np.save(point_data_path, self.point_data)
 
         # Store the calibration matrices
         for calib_idx in self.calibrated:
             calib_mat_filename = os.path.splitext(self.img_files[calib_idx])[0] + '.npy'
-            calib_mat_path = os.path.join(self.save_dir, calib_mat_filename)
+            calib_mat_path = os.path.join(state_folder_path, calib_mat_filename)
             np.save(calib_mat_path, self.calib_param[calib_idx])
     
     def load_state(self, event):
@@ -678,10 +683,6 @@ class CalibGUI(tk.Frame):
             for point_key in loaded_point_data[cam_key].keys():
                 point_data[int(cam_key)][int(point_key)] = loaded_point_data[cam_key][point_key]
         self.point_data = point_data
-        # self.floor_points = [0, 1, 2, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 
-        #     20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-        #     33, 35, 36, 38, 39, 40, 41, 42,
-        #     43, 44, 45, 47, 48, 49, 51, 52]
 
         self.update_text_dialogs()
         self.redraw_points()
