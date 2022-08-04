@@ -65,6 +65,9 @@ class CalibGUI(tk.Frame):
         self.point_data = {}
         self.calibrated = []
         self.calib_param = {}
+        
+        # Set a counter for the rows
+        curr_row = 0
 
         # TODO: Fix logo
         # Create an object of tkinter ImageTk
@@ -75,7 +78,8 @@ class CalibGUI(tk.Frame):
         # # Create a photoimage object of the image in the path
         # logo_label = tk.Label(master, image=self.logo_img)
         # logo_label.grid(
-        #     column=0, row=0, sticky=tk.W+tk.E, columnspan=2, padx=0, pady=0)
+        #     column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=0, pady=0)
+        curr_row += 1
 
         # Button Select images
         self.button_images = ttk.Button(
@@ -83,7 +87,7 @@ class CalibGUI(tk.Frame):
             text='Images',
             command=self.select_img_files
         ).grid(
-            column=0, row=1, sticky=tk.W+tk.E, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
 
         # Button Select minimap
         self.button_minimap = ttk.Button(
@@ -91,31 +95,37 @@ class CalibGUI(tk.Frame):
             text='Minimap',
             command=self.select_minimap
         ).grid(
-            column=1, row=1, sticky=tk.W+tk.E, padx=10, pady=10)
+            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        curr_row += 1
 
         # Window 1 Text box
         tk.Label(master, text="Image 1").grid(
-            column=0, row=2, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
+        curr_row += 1
 
         # File List boxes
         self.file_list_img1 = tk.Listbox(
             master, height=5, width=20, selectmode='extended')
         self.file_list_img1.grid(
-            column=0, row=3, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
 
         # Window 2 Text box
         tk.Label(master, text="Image 2").grid(
-            column=0, row=4, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
+        curr_row += 1
 
         self.file_list_img2 = tk.Listbox(
             master, height=5, width=20, selectmode='extended')
         self.file_list_img2.grid(
-            column=0, row=5, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
 
         # Point list text box
         tk.Label(master, text="Points").grid(
-            column=0, row=6, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
-        
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
+        curr_row += 1
+
         self.previous_l1_selections = None
         self.previous_l2_selections = None
         self.previous_point_selections = None
@@ -126,11 +136,13 @@ class CalibGUI(tk.Frame):
             height=5, width=20, 
             selectforeground='red', selectmode='extended', activestyle='none')
         self.point_list.grid(
-            column=0, row=7, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
 
         # Image & minimap scaling option menu
         tk.Label(master, text="Scale").grid(
-            column=0, row=8, sticky=tk.W+tk.E, padx=10, pady=0)
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=0)
+        curr_row += 1
 
         img_scale_opt = ['1.0', '2.0', '4.0']
         self.img_scale = tk.StringVar()
@@ -140,7 +152,8 @@ class CalibGUI(tk.Frame):
         self.img_scaling_option_menu = tk.OptionMenu(
             master, self.img_scale, *img_scale_opt)
         self.img_scaling_option_menu.grid(
-            column=0, row=9, sticky=tk.W+tk.E, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        curr_row += 1
 
         # Calibrate Buttons
         self.button_calibrate_2cams = ttk.Button(
@@ -148,30 +161,34 @@ class CalibGUI(tk.Frame):
             text='Calibrate 2 Cameras',
             command=self.calibrate_2cams
         ).grid(
-            column=0, row=10, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
-        
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
+
         # Calibrate Buttons
         self.button_calibrate_ncams = ttk.Button(
             master,
             text='Calibrate N Cameras',
             command=self.calibrate_ncams
         ).grid(
-            column=0, row=11, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
-        
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
+
         # Calibrate Buttons
         self.button_recalibrate = ttk.Button(
             master,
             text='Add 1 Camera',
             command=self.calibrate_1cam
         ).grid(
-            column=0, row=12, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
 
         self.button_recalibrate = ttk.Button(
             master,
             text='Evaluate Calibration',
             command=self.display_image_points_to_minimap_points
         ).grid(
-            column=0, row=13, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
+        curr_row += 1
 
         ###### Image Display #######
         canvas_size = '{}x{}'.format(200, 200)
