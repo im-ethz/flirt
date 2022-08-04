@@ -98,6 +98,15 @@ class CalibGUI(tk.Frame):
             column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         curr_row += 1
 
+        # Button add points 
+        self.button_images = ttk.Button(
+            master,
+            text='Points',
+            command=self.load_point_data
+        ).grid(
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        curr_row += 1
+
         # Window 1 Text box
         tk.Label(master, text="Image 1").grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=0)
@@ -238,7 +247,6 @@ class CalibGUI(tk.Frame):
         master.bind_all('s', self.save_state)
         master.bind_all('l', self.load_state)
         master.bind_all('d', self.delete_selected_point)
-        master.bind_all('x', self.load_point_data) # For debugging
 
         # Press f to set current point as a floor point
         self.point_list.bind('f', self.select_floor_point)
@@ -650,7 +658,7 @@ class CalibGUI(tk.Frame):
         self.redraw_points()
         self.update_point_list()
     
-    def load_point_data(self, event):
+    def load_point_data(self,):
         # Select folder if not selected
         load_path = fd.askopenfilename(filetypes=npy_filetypes)
         loaded_point_data = np.load(load_path, allow_pickle=True).item()
@@ -662,10 +670,10 @@ class CalibGUI(tk.Frame):
             for point_key in loaded_point_data[cam_key].keys():
                 point_data[int(cam_key)][int(point_key)] = loaded_point_data[cam_key][point_key]
         self.point_data = point_data
-        self.floor_points = [0, 1, 2, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 
-            20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-            33, 35, 36, 38, 39, 40, 41, 42,
-            43, 44, 45, 47, 48, 49, 51, 52]
+        # self.floor_points = [0, 1, 2, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 
+        #     20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+        #     33, 35, 36, 38, 39, 40, 41, 42,
+        #     43, 44, 45, 47, 48, 49, 51, 52]
 
         self.update_text_dialogs()
         self.redraw_points()
@@ -825,5 +833,3 @@ class CalibGUI(tk.Frame):
             self.previous_img_scale = scale
         
         self.after(500, self.get_scale_selection)
-
-
