@@ -255,6 +255,7 @@ class CalibGUI(tk.Frame):
         master.bind_all('s', self.save_state)
         master.bind_all('l', self.load_state)
         master.bind_all('d', self.delete_selected_point)
+        master.bind_all('f', self.delete_selected_point_in_image)
 
         # Press f to set current point as a floor point
         self.point_list.bind('f', self.select_floor_point)
@@ -415,6 +416,46 @@ class CalibGUI(tk.Frame):
 
         self.update_point_list()
         self.redraw_points()
+    
+    def delete_selected_point_in_image(self, event):
+        # Get the active window
+        focus = str(self.master.focus_get())
+        if focus == '.!toplevel.!canvas':
+            # Img 1
+            img_idx = self.idx_img1
+        elif focus == '.!toplevel2.!canvas':
+            # Img 1
+            img_idx = self.idx_img2
+        elif focus == '.!toplevel3.!canvas':
+            img_idx = self.idx_minimap
+        else:
+            return
+        
+        # Delete the point from the view
+        del self.point_data[img_idx][self.point_lbl]
+        
+        # Check if self.point_lbl in any point data
+        point_labels = []
+        for idx in self.point_data.keys():
+            point_labels += self.point_data[idx].keys()
+        point_labels = sorted(set(point_labels))
+        
+        # If this point is not existent, then clean up
+        if not self.point_lbl in point_labels:
+            # Delete from point list
+            self.point_list.delete(self.point_idx)
+
+            # Delete from floor_points
+            if self.point_lbl in self.floor_points:
+                self.floor_points.remove(self.point_lbl)
+
+            # Update the point label
+            point_lbls = [int(i.strip()) for i in self.point_list.get(0, tk.END)]
+            self.point_idx = min(self.point_idx, len(point_lbls) - 1)
+            self.point_lbl = point_lbls[self.point_idx]
+
+        self.update_point_list()
+        self.redraw_points()
 
     def corresponding_point_img1(self, event):  # on click
         scale = float(self.img_scale.get())
@@ -445,10 +486,6 @@ class CalibGUI(tk.Frame):
         self.point_data[self.idx_minimap][self.point_lbl] = (x, y)
         self.update_point_list()
         self.redraw_points()
-
-    def delete_point(self, event):
-        if len(self.img1_points) > 0:
-            self.img1_points.pop()
 
     def img1_next(self, *args):
         self.idx_img1 += 1
@@ -821,6 +858,8 @@ class CalibGUI(tk.Frame):
             self.canvas_img1.focus_set()
         elif focus == '.!toplevel2.!canvas':
             self.canvas_img2.focus_set()
+        elif focus == '.!toplevel3':
+            self.canvas_minimap.focus_set()
 
         self.after(500, self.update_windows)
 
