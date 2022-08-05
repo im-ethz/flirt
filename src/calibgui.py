@@ -207,6 +207,15 @@ class CalibGUI(tk.Frame):
             column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
         curr_row += 1
 
+        self.button_recalibrate = ttk.Button(
+            master,
+            text='Load',
+            command=self.load_state
+        ).grid(
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        
+        curr_row += 1
+
         ###### Image Display #######
         canvas_size = '{}x{}'.format(200, 200)
         # Display Canvas in new window
@@ -684,7 +693,7 @@ class CalibGUI(tk.Frame):
             calib_mat_path = os.path.join(state_folder_path, calib_mat_filename)
             np.save(calib_mat_path, self.calib_param[calib_idx])
     
-    def load_state(self, event):
+    def load_state(self, *args):
         # Select folder if not selected
         load_path = fd.askopenfilename(filetypes=npy_filetypes)
         state = np.load(load_path, allow_pickle=True).item()
