@@ -199,7 +199,7 @@ class CalibGUI(tk.Frame):
             column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
         curr_row += 1
 
-        self.button_recalibrate = ttk.Button(
+        self.button_eval_calibration = ttk.Button(
             master,
             text='Evaluate Calibration',
             command=self.display_image_points_to_minimap_points
@@ -207,12 +207,19 @@ class CalibGUI(tk.Frame):
             column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
         curr_row += 1
 
-        self.button_recalibrate = ttk.Button(
+        self.button_load_state = ttk.Button(
             master,
             text='Load',
             command=self.load_state
         ).grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        
+        self.button_save_state = ttk.Button(
+            master,
+            text='Save',
+            command=self.save_state
+        ).grid(
+            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         
         curr_row += 1
 
@@ -654,7 +661,7 @@ class CalibGUI(tk.Frame):
         self.canvas_img2.update()
         self.canvas_minimap.update()
 
-    def save_state(self, event):
+    def save_state(self, *args):
         if self.save_dir == None:
             self.save_dir = fd.askdirectory()
         
