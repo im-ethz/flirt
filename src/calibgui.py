@@ -1,4 +1,5 @@
 import os
+import torch
 import numpy as np
 from PIL import Image, ImageTk
 
@@ -752,7 +753,7 @@ class CalibGUI(tk.Frame):
             param_file_base = os.path.splitext(param_filename)[0]
             if param_file_base in file_base:
                 # Load the parameters
-                parameters = np.load(param_filepath)
+                parameters = torch.from_numpy(np.load(param_filepath))
                 # Get the index
                 idx = file_base.index(param_file_base)
                 # Put them into the self.calib
