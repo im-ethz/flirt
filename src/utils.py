@@ -25,18 +25,14 @@ def get_intersection(points0, points1, f0, R_inv0, t0,f1,R_inv1, t1):
     errors = torch.sum((intersection0-intersection1)**2)
     return intersection, distance0, distance1, errors
 
-def get_calibrated_points(parameters, cam_shape, plane_figure_shape, save_data=False, save_path = './temp_image_save/'):
+def get_calibrated_points(parameters, cam_shape, num_points=10, offset=10):
     """calibrate 된 카메라 화면에 등간격으로 점을 찍고, 이 점들을 평면도에 mapping한 결과를 띄우거나 저장하는 함수"""
-    half_diag_length = cam_shape
-    half_diag_length = np.sqrt(half_diag_length[0] ** 2 + half_diag_length[1] ** 2) / 2
-    half_diag_length_plane = plane_figure_shape
-    half_diag_length_plane = np.sqrt(half_diag_length_plane[0] ** 2 + half_diag_length_plane[1] ** 2) / 2
-
-    coords_dist = half_diag_length/7
-    n_xpoints = int(cam_shape[1] // coords_dist + 1)
-    n_ypoints = int(cam_shape[0] // coords_dist + 1)
-    coords_x = coords_dist * torch.arange(n_xpoints).unsqueeze(1).expand(n_xpoints, n_ypoints)
-    coords_y = coords_dist * torch.arange(n_ypoints).unsqueeze(0).expand(n_xpoints, n_ypoints)
+    spacing_x = (cam_shape[1] - (2 * offset)) / (num_points - 1)
+    spacing_y = (cam_shape[0] - (2 * offset)) / (num_points - 1)
+    
+    coords_x = spacing_x * torch.arange(num_points).unsqueeze(1).expand(num_points, num_points) + offset
+    coords_y = spacing_y * torch.arange(num_points).unsqueeze(0).expand(num_points, num_points) + offset
+    
     cam_point = torch.stack([coords_x, coords_y], dim=2).reshape(-1,2)
     normalized_cam_point = normalize_points_by_image(cam_point, cam_shape[1::-1])
     ground_point = cam_to_plane(normalized_cam_point, parameters)
