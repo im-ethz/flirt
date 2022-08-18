@@ -69,17 +69,7 @@ class CalibGUI(tk.Frame):
         
         # Set a counter for the rows
         curr_row = 0
-
-        # TODO: Fix logo
-        # Create an object of tkinter ImageTk
-        # img = Image.open("./asset/logo.png")
-        # img = img.resize((111, 90), Image.Resampling.LANCZOS)
-        # self.logo_img = ImageTk.PhotoImage(img)
-
-        # # Create a photoimage object of the image in the path
-        # logo_label = tk.Label(master, image=self.logo_img)
-        # logo_label.grid(
-        #     column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=0, pady=0)
+        
         curr_row += 1
 
         # Button Select images
