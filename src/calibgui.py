@@ -158,8 +158,10 @@ class CalibGUI(tk.Frame):
         curr_row += 1
 
         # Image & minimap scaling option menu
-        tk.Label(master, text="Scale").grid(
+        tk.Label(master, text="Scale Image").grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=0)
+        tk.Label(master, text="Scale Minimap").grid(
+            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=0)
         curr_row += 1
 
         img_scale_opt = ['1.0', '2.0', '4.0']
@@ -171,6 +173,16 @@ class CalibGUI(tk.Frame):
             master, self.img_scale, *img_scale_opt)
         self.img_scaling_option_menu.grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+        
+        minimap_scale_opt = ['1.0', '2.0', '4.0']
+        self.minimap_scale = tk.StringVar()
+        self.minimap_scale.set(minimap_scale_opt[0])
+        self.previous_minimap_scale = float(self.minimap_scale.get())
+
+        self.minimap_scaling_option_menu = tk.OptionMenu(
+            master, self.minimap_scale, *minimap_scale_opt)
+        self.minimap_scaling_option_menu.grid(
+            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         curr_row += 1
 
         # Calibrate Buttons
@@ -402,7 +414,7 @@ class CalibGUI(tk.Frame):
                 new_point_label = idx
                 break
 
-        scale = float(self.img_scale.get())
+        scale = float(self.minimap_scale.get())
         x = int(event.x * scale)
         y = int(event.y * scale)
 
@@ -495,7 +507,7 @@ class CalibGUI(tk.Frame):
         self.redraw_points()
     
     def corresponding_point_minimap(self, event):  # on click
-        scale = float(self.img_scale.get())
+        scale = float(self.minimap_scale.get())
         x = int(event.x * scale)
         y = int(event.y * scale)
         if not self.point_data.get(self.idx_minimap):
@@ -607,7 +619,7 @@ class CalibGUI(tk.Frame):
         # Canvas 3
         self.canvas_minimap.delete('minimap')
         self.minimap = load_image(
-             self.minimap_path, scale=float(self.img_scale.get()))
+             self.minimap_path, scale=float(self.minimap_scale.get()))
         self.canvas_minimap.create_image(
             0, 0, anchor=tk.NW, image=self.minimap, tags='minimap')
         self.canvas_minimap.update()
@@ -617,14 +629,15 @@ class CalibGUI(tk.Frame):
         self.canvas_img2.delete('point')
         self.canvas_minimap.delete('point')
 
-        scale = float(self.img_scale.get())
+        img_scale = float(self.img_scale.get())
+        minimap_scale = float(self.minimap_scale.get())
 
         for img_lbl in self.point_data.keys():
             pt_labels = [i for i in [*self.point_data[img_lbl]]]
             for p_lbl in pt_labels:
                 if img_lbl == self.idx_img1:
-                    x = int(self.point_data[img_lbl][p_lbl][0] / scale)
-                    y = int(self.point_data[img_lbl][p_lbl][1] / scale)
+                    x = int(self.point_data[img_lbl][p_lbl][0] / img_scale)
+                    y = int(self.point_data[img_lbl][p_lbl][1] / img_scale)
                     if p_lbl == self.point_lbl:
                         color = 'red'
                     else:
@@ -635,8 +648,8 @@ class CalibGUI(tk.Frame):
                         x+5, y-5, text=p_lbl, fill=color, font=('Helvetica 12 bold'), tags='point')
 
                 if img_lbl == self.idx_img2:
-                    x = int(self.point_data[img_lbl][p_lbl][0] / scale)
-                    y = int(self.point_data[img_lbl][p_lbl][1] / scale)
+                    x = int(self.point_data[img_lbl][p_lbl][0] / img_scale)
+                    y = int(self.point_data[img_lbl][p_lbl][1] / img_scale)
                     if p_lbl == self.point_lbl:
                         color = 'red'
                     else:
@@ -647,8 +660,8 @@ class CalibGUI(tk.Frame):
                         x+5, y-5, text=p_lbl, fill=color, font=('Helvetica 12 bold'), tags='point')
                 
                 if img_lbl == self.idx_minimap:
-                    x = int(self.point_data[img_lbl][p_lbl][0] / scale)
-                    y = int(self.point_data[img_lbl][p_lbl][1] / scale)
+                    x = int(self.point_data[img_lbl][p_lbl][0] / minimap_scale)
+                    y = int(self.point_data[img_lbl][p_lbl][1] / minimap_scale)
                     if p_lbl == self.point_lbl:
                         color = 'red'
                     else:
@@ -821,7 +834,8 @@ class CalibGUI(tk.Frame):
         self.canvas_img2.delete('calib_points')
         self.canvas_minimap.delete('calib_points')
         
-        scale = float(self.img_scale.get())
+        img_scale = float(self.img_scale.get())
+        minimap_scale = float(self.minimap_scale.get())
 
         if self.idx_img1 in self.calib_param.keys():
             cam_point, ground_point = get_calibrated_points(
@@ -831,12 +845,12 @@ class CalibGUI(tk.Frame):
             # Calibration for camera 1
             color = 'magenta'
             for i in range(cam_point.shape[0]):
-                x = int(cam_point[i][0] / scale)
-                y = int(cam_point[i][1] / scale)
+                x = int(cam_point[i][0] / img_scale)
+                y = int(cam_point[i][1] / img_scale)
                 self.canvas_img1.create_oval(x-2, y-2, x+2, y+2, fill=color, width=0, tags='calib_points')
 
-                x = int(ground_point[i][0] / scale)
-                y = int(ground_point[i][1] / scale)
+                x = int(ground_point[i][0] / minimap_scale)
+                y = int(ground_point[i][1] / minimap_scale)
                 self.canvas_minimap.create_oval(x-2, y-2, x+2, y+2, fill=color, width=0, tags='calib_points')
         else:
             print('No Camera calibration available for: {}'.format(self.idx_img1))
@@ -849,12 +863,12 @@ class CalibGUI(tk.Frame):
             # Calibration for camera 2
             color = 'green'
             for i in range(cam_point.shape[0]):
-                x = int(cam_point[i][0] / scale)
-                y = int(cam_point[i][1] / scale)
+                x = int(cam_point[i][0] / img_scale)
+                y = int(cam_point[i][1] / img_scale)
                 self.canvas_img2.create_oval(x-2, y-2, x+2, y+2, fill=color, width=0, tags='calib_points')
 
-                x = int(ground_point[i][0] / scale)
-                y = int(ground_point[i][1] / scale)
+                x = int(ground_point[i][0] / minimap_scale)
+                y = int(ground_point[i][1] / minimap_scale)
                 self.canvas_minimap.create_oval(x-2, y-2, x+2, y+2, fill=color, width=0, tags='calib_points')
         else:
             print('No Camera calibration available for: {}'.format(self.idx_img2))
@@ -914,11 +928,15 @@ class CalibGUI(tk.Frame):
         self.after(500, self.get_listbox_selection)
 
     def get_scale_selection(self):
-        scale = float(self.img_scale.get())
-        if scale != self.previous_img_scale:
+        img_scale = float(self.img_scale.get())
+        if img_scale != self.previous_img_scale:
             self.redraw_images()
+            self.redraw_points()
+            self.previous_img_scale = img_scale
+        
+        minimap_scale = float(self.minimap_scale.get())
+        if minimap_scale != self.previous_minimap_scale:
             self.redraw_minimap()
             self.redraw_points()
-            self.previous_img_scale = scale
-        
+            self.previous_minimap_scale = minimap_scale
         self.after(500, self.get_scale_selection)
