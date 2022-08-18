@@ -69,7 +69,7 @@ class CalibGUI(tk.Frame):
         
         # Set a counter for the rows
         curr_row = 0
-        
+
         curr_row += 1
 
         # Button Select images
