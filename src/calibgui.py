@@ -830,7 +830,9 @@ class CalibGUI(tk.Frame):
         if self.idx_img1 in self.calib_param.keys():
             cam_point, ground_point = get_calibrated_points(
                                             parameters=self.calib_param[self.idx_img1],
-                                            cam_shape=self.cam_shape[self.idx_img1])
+                                            cam_shape=self.cam_shape[self.idx_img1],
+                                            num_points=50,
+                                            offset=10)
         
             # Calibration for camera 1
             color = 'magenta'
@@ -848,7 +850,9 @@ class CalibGUI(tk.Frame):
         if self.idx_img2 in self.calib_param.keys():
             cam_point, ground_point = get_calibrated_points(
                                             parameters=self.calib_param[self.idx_img2],
-                                            cam_shape=self.cam_shape[self.idx_img2])
+                                            cam_shape=self.cam_shape[self.idx_img2],
+                                            num_points=50, 
+                                            offset=10)
             
             # Calibration for camera 2
             color = 'green'
