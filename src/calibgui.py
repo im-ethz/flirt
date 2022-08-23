@@ -274,7 +274,7 @@ class CalibGUI(tk.Frame):
         master.bind_all('s', self.save_state)
         master.bind_all('l', self.load_state)
         master.bind_all('d', self.delete_selected_point)
-        master.bind_all('f', self.delete_selected_point_in_image)
+        master.bind_all('c', self.delete_selected_point_in_image)
 
         # Press f to set current point as a floor point
         self.point_list.bind('f', self.select_floor_point)
