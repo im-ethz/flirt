@@ -164,7 +164,7 @@ class CalibGUI(tk.Frame):
         self.img_scaling_option_menu.grid(
             column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         
-        minimap_scale_opt = ['1.0', '2.0', '4.0']
+        minimap_scale_opt = ['1.0', '2.0', '4.0', '8.0']
         self.minimap_scale = tk.StringVar()
         self.minimap_scale.set(minimap_scale_opt[0])
         self.previous_minimap_scale = float(self.minimap_scale.get())
