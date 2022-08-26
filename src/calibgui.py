@@ -210,19 +210,12 @@ class CalibGUI(tk.Frame):
             column=0, row=curr_row, sticky=tk.W+tk.E, columnspan=2, padx=10, pady=10)
         curr_row += 1
 
-        self.button_load_state = ttk.Button(
-            master,
-            text='Load',
-            command=self.load_state
-        ).grid(
-            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
-        
-        self.button_save_state = ttk.Button(
+        self.button_save = ttk.Button(
             master,
             text='Save',
-            command=self.save_state
+            command=self.save
         ).grid(
-            column=1, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
+            column=0, row=curr_row, sticky=tk.W+tk.E, padx=10, pady=10)
         
         curr_row += 1
 
@@ -271,15 +264,12 @@ class CalibGUI(tk.Frame):
         self.canvas_minimap.bind('<Button-2>', self.add_point_minimap)
 
         # Key bindings for save and restore
-        master.bind_all('s', self.save_state)
-        master.bind_all('l', self.load_state)
+        master.bind_all('s', self.save)
         master.bind_all('d', self.delete_selected_point)
         master.bind_all('c', self.delete_selected_point_in_image)
 
         # Press f to set current point as a floor point
         self.point_list.bind('f', self.select_floor_point)
-
-        # TODO: Initialization?
 
         self.update_windows()
         self.get_listbox_selection()
@@ -665,23 +655,9 @@ class CalibGUI(tk.Frame):
         self.canvas_img2.update()
         self.canvas_minimap.update()
 
-    def save_state(self, *args):
+    def save(self, *args):
         if self.save_dir == None:
             self.save_dir = fd.askdirectory()
-        
-        state = {}
-        state['img_filepaths'] = self.img_filepaths
-        state['img_files'] = self.img_files
-        state['minimap_path'] = self.minimap_path
-        state['minimap_filename'] = self.minimap_filename
-        state['idx_img1'] = self.idx_img1
-        state['idx_img2'] = self.idx_img2
-        state['point_idx'] = self.point_idx
-        state['point_lbl'] = self.point_lbl
-        state['floor_points'] = self.floor_points
-        state['point_data'] = self.point_data
-        state['calibrated'] = self.calibrated
-        state['calib_param'] = self.calib_param
         
         filenames = [os.path.splitext(f)[0] for f in self.img_files + [self.minimap_filename]]
         folder_name = "_".join(filenames)
@@ -690,13 +666,12 @@ class CalibGUI(tk.Frame):
         if not os.path.exists(state_folder_path):
             os.makedirs(state_folder_path)
         
-        # Store the state
-        state_path = os.path.join(state_folder_path, 'state.npy')
-        np.save(state_path, state)
-
         # Store the point data
         point_data_path = os.path.join(state_folder_path, 'cam.npy')
-        np.save(point_data_path, self.point_data)
+        point_data = {}
+        point_data["point_data"] = self.point_data
+        point_data["floor_points"] = self.floor_points
+        np.save(point_data_path, point_data)
 
         # Store the calibration matrices
         for calib_idx in self.calibrated:
@@ -704,35 +679,20 @@ class CalibGUI(tk.Frame):
             calib_mat_path = os.path.join(state_folder_path, calib_mat_filename)
             np.save(calib_mat_path, self.calib_param[calib_idx])
     
-    def load_state(self, *args):
-        # Select folder if not selected
-        load_path = fd.askopenfilename(filetypes=npy_filetypes)
-        state = np.load(load_path, allow_pickle=True).item()
-
-        # State Vars
-        self.img_filepaths = state['img_filepaths']
-        self.img_files = state['img_files']
-        self.minimap_path = state['minimap_path']
-        self.minimap_filename = state['minimap_filename']
-        self.idx_img1 = state['idx_img1']
-        self.idx_img2 = state['idx_img2']
-        self.point_idx = state['point_idx']
-        self.point_lbl = state['point_lbl']
-        self.floor_points = state['floor_points']
-        self.point_data = state['point_data']
-        self.calibrated = state['calibrated']
-        self.calib_param = state['calib_param']
-
-        self.update_text_dialogs()
-        self.redraw_images()
-        self.redraw_points()
-        self.update_point_list()
-    
     def load_point_data(self,):
         # Select folder if not selected
         load_path = fd.askopenfilename(filetypes=npy_filetypes)
-        loaded_point_data = np.load(load_path, allow_pickle=True).item()
-
+        loaded_data = np.load(load_path, allow_pickle=True).item()
+        
+        # Check if floor_points are provided
+        if ("point_data" in loaded_data) and ("floor_points" in loaded_data):
+            # New format
+            loaded_point_data = loaded_data["point_data"]
+            self.floor_points = loaded_data["floor_points"]
+        else:
+            # Previous format
+            loaded_point_data = loaded_data
+        
         # Make sure all keys are represented as int
         point_data = {}
         for cam_key in loaded_point_data.keys():
@@ -740,7 +700,7 @@ class CalibGUI(tk.Frame):
             for point_key in loaded_point_data[cam_key].keys():
                 point_data[int(cam_key)][int(point_key)] = loaded_point_data[cam_key][point_key]
         self.point_data = point_data
-
+        
         self.update_text_dialogs()
         self.redraw_points()
         self.update_point_list()
