@@ -41,6 +41,10 @@ class CalibGUI(tk.Frame):
         Frame.__init__(self, master)
         self.master = master
         self.args = args
+        
+        # Set the theme
+        style = ttk.Style()
+        style.theme_use("aqua")
 
         main_window_width = 250
         main_window_height = 900
