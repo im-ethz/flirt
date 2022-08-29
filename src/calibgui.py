@@ -295,7 +295,7 @@ class CalibGUI(tk.Frame):
         self.cam_shape = {}
         for cam_index in range(self.n_cam):
             # self.cam[cam_index] = cv2.imread(self.img_filepaths[cam_index])
-            w, h = Image.open(self.img_filepaths[0]).size
+            w, h = Image.open(self.img_filepaths[cam_index]).size
             self.cam_shape[cam_index] = (h, w, 3)
 
         self.file_list_img1.delete(0, tk.END)
@@ -802,7 +802,7 @@ class CalibGUI(tk.Frame):
         
         img_scale = float(self.img_scale.get())
         minimap_scale = float(self.minimap_scale.get())
-
+        
         if self.idx_img1 in self.calib_param.keys():
             cam_point, ground_point = get_calibrated_points(
                                             parameters=self.calib_param[self.idx_img1],
