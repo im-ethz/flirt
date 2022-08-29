@@ -271,6 +271,7 @@ class CalibGUI(tk.Frame):
         master.bind_all('s', self.save)
         master.bind_all('d', self.delete_selected_point)
         master.bind_all('c', self.delete_selected_point_in_image)
+        master.bind_all('k', self.delete_calib_param)
 
         # Press f to set current point as a floor point
         self.point_list.bind('f', self.select_floor_point)
@@ -469,6 +470,13 @@ class CalibGUI(tk.Frame):
 
         self.update_point_list()
         self.redraw_points()
+    
+    def delete_calib_param(self, event):
+        if self.idx_img1 in self.calib_param.keys():
+            del self.calib_param[self.idx_img1]
+            self.calibrated.remove(self.idx_img1)
+        
+            self.update_text_dialogs()
 
     def corresponding_point_img1(self, event):  # on click
         scale = float(self.img_scale.get())
@@ -542,7 +550,11 @@ class CalibGUI(tk.Frame):
             if idx in self.calibrated:
                 self.file_list_img1.itemconfig(idx, {'bg': 'green'})
                 self.file_list_img2.itemconfig(idx, {'bg': 'green'})
-            
+            else:
+                self.file_list_img1.itemconfig(idx, {'bg': ''})
+                self.file_list_img2.itemconfig(idx, {'bg': ''})
+
+
         self.file_list_img1.update()
         self.file_list_img2.update()
 
