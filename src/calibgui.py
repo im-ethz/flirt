@@ -285,8 +285,7 @@ class CalibGUI(tk.Frame):
         img_filepaths = fd.askopenfilenames(
             filetypes=img_filetypes, parent=self.master, title='Choose a file')
         self.img_filepaths = [f for f in img_filepaths]
-        # TODO: Might break on Windows?
-        self.img_files = [f.split('/')[-1] for f in self.img_filepaths]
+        self.img_files = [os.path.split(f)[1] for f in self.img_filepaths]
 
         self.idx_minimap = len(self.img_filepaths)
 
@@ -316,8 +315,8 @@ class CalibGUI(tk.Frame):
 
     def select_minimap(self,):
         self.minimap_path = fd.askopenfilename(filetypes=img_filetypes)
-        # TODO: Might break on Windows?
-        self.minimap_filename = self.minimap_path.split('/')[-1]
+        self.minimap_filename = os.path.split(self.minimap_path)[1]
+        
         # self.minimap_cv2 = cv2.imread(self.minimap_path)
         w, h = Image.open(self.minimap_path).size
         self.minimap_shape = (h, w, 3)
@@ -724,8 +723,7 @@ class CalibGUI(tk.Frame):
     def load_parameters(self,):
         parameter_filepaths = fd.askopenfilenames(
             filetypes=npy_filetypes, parent=self.master, title='Choose file')
-        # TODO: Might break on Windows?
-        param_file_names = [f.split('/')[-1] for f in parameter_filepaths]
+        param_file_names = [os.path.split(f)[1] for f in parameter_filepaths]
         file_base = [os.path.splitext(f)[0] for f in self.img_files]
 
         for param_filepath, param_filename in zip(parameter_filepaths, param_file_names):
