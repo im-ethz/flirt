@@ -44,7 +44,7 @@ class CalibGUI(tk.Frame):
         
         # Set the theme
         style = ttk.Style()
-        style.theme_use("aqua")
+        style.theme_use("default")
 
         main_window_width = 250
         main_window_height = 900
@@ -230,7 +230,7 @@ class CalibGUI(tk.Frame):
         window_img1.title("Window 1")
         window_img1.geometry(canvas_size)
         self.canvas_img1 = tk.Canvas(
-            window_img1, bg='white', width=self.canvas_width, height=self.canvas_height)
+            window_img1, width=self.canvas_width, height=self.canvas_height)
         self.canvas_img1.pack()
 
         # Display Canvas in new window
@@ -238,7 +238,7 @@ class CalibGUI(tk.Frame):
         window_img2.title("Window 2")
         window_img2.geometry(canvas_size)
         self.canvas_img2 = tk.Canvas(
-            window_img2, bg='white', width=self.canvas_width, height=self.canvas_height)
+            window_img2, width=self.canvas_width, height=self.canvas_height)
         self.canvas_img2.pack()
 
         # Display Canvas in new window
@@ -246,7 +246,7 @@ class CalibGUI(tk.Frame):
         window_img3.title("Minimap")
         window_img3.geometry(canvas_size)
         self.canvas_minimap = tk.Canvas(
-            window_img3, bg='white', width=self.canvas_width, height=self.canvas_height)
+            window_img3, width=self.canvas_width, height=self.canvas_height)
         self.canvas_minimap.pack()
 
         # Key bindings for image navigation
@@ -540,11 +540,11 @@ class CalibGUI(tk.Frame):
             if idx == self.idx_img1:
                 self.file_list_img1.itemconfig(idx, {'fg': 'red'})
             else:
-                self.file_list_img1.itemconfig(idx, {'fg': 'white'})
+                self.file_list_img1.itemconfig(idx, {'fg': ''})
             if idx == self.idx_img2:
                 self.file_list_img2.itemconfig(idx, {'fg': 'red'})
             else:
-                self.file_list_img2.itemconfig(idx, {'fg': 'white'})
+                self.file_list_img2.itemconfig(idx, {'fg': ''})
 
             if idx in self.calibrated:
                 self.file_list_img1.itemconfig(idx, {'bg': 'green'})
@@ -582,7 +582,7 @@ class CalibGUI(tk.Frame):
             if p_lbl == self.point_lbl:
                 self.point_list.itemconfig(p_idx, {'fg': 'red'})
             else:
-                self.point_list.itemconfig(p_idx, {'fg': 'white'})
+                self.point_list.itemconfig(p_idx, {'fg': ''})
             if p_lbl in self.floor_points:
                 self.point_list.itemconfig(p_idx, {'bg': 'green'})
             else:
