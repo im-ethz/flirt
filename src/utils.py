@@ -42,6 +42,7 @@ def get_calibrated_points(parameters, cam_shape, num_points=10, offset=10):
 def cam_to_plane(normalized_cam_point, parameters):
     thetas, t, f, K = torch.split(parameters, [3, 3, 1, 1])
     R = thetas_to_R(thetas.unsqueeze(0), True).squeeze(0)
+    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
     undistorted_cam_point = distort_point(normalized_cam_point, K)
     vector0 = undistorted_cam_point / f
     vector0 = torch.matmul(torch.inverse(R).unsqueeze(0),
@@ -345,6 +346,8 @@ class loss_essential_matrix():
         fundamental_matrix = fundamental_matrix.view(3, 3)
         f0 = torch.exp(log_f0)
         f1 = torch.exp(log_f1)
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted 
+        # and the epipolar geometry assumption that is used to compute the fundamental matrix expects undistorted points.
         undistorted_points0 = distort_point(self.normalized_points0, K0) / f0
         undistorted_points1 = distort_point(self.normalized_points1, K1) / f1
 
@@ -503,6 +506,8 @@ class ground_1camloss():
         est_cam_points = torch.matmul(homography_matrix.unsqueeze(0),
                                     F.pad(self.map_points, [0, 1], value=1).unsqueeze(2)).squeeze(2)
         est_cam_points = est_cam_points[:, :2] / est_cam_points[:, 2:]
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         undistorted_cam_point = distort_point(self.normalized_cam_point, K)
 
         normalizing_factor = normalize_points(undistorted_cam_point)[1]
@@ -612,6 +617,7 @@ class make_loss_for_n():
         current_index = 0
         for index in range(len(self.cam_list)):
             next_index = current_index+self.n_points_incam[index]
+            # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
             undistorted_points = distort_point(self.points_for_norm_factor[current_index:next_index], K[index])
             current_index = next_index
             normalizing_factor.append(normalize_points(undistorted_points)[1])
@@ -628,6 +634,8 @@ class make_loss_for_n():
         norm_factor_for_map_loss = torch.split(infos_for_map_loss, [9, 9, 3,1,1,1], dim=1)
         R_for_map_loss = R_for_map_loss.view(-1,3,3)
 
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         points_for_maploss = distort_point(self.points_for_maploss, K_for_map_loss)
         map_point_cam = torch.matmul(R_for_map_loss, (self.map_points - t_for_map_loss).unsqueeze(2)).squeeze(2)
         map_point_cam = map_point_cam[:,:2] / map_point_cam[:, 2:]
