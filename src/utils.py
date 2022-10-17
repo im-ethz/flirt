@@ -634,7 +634,7 @@ class make_loss_for_n():
         norm_factor_for_map_loss = torch.split(infos_for_map_loss, [9, 9, 3,1,1,1], dim=1)
         R_for_map_loss = R_for_map_loss.view(-1,3,3)
 
-        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them to compare them 
+        # TODO: calls function to distort points but should be undistorting points here not distorting them to compare them 
         # in the loss function below with undistorted points transformed from the top-view
         points_for_maploss = distort_point(self.points_for_maploss, K_for_map_loss)
         map_point_cam = torch.matmul(R_for_map_loss, (self.map_points - t_for_map_loss).unsqueeze(2)).squeeze(2)
@@ -655,6 +655,8 @@ class make_loss_for_n():
         R_inv_for_mainloss0 = R_inv_for_mainloss0.view(-1, 3, 3)
         R_for_mainloss1 = R_for_mainloss1.view(-1, 3, 3)
         R_inv_for_mainloss1 = R_inv_for_mainloss1.view(-1, 3, 3)
+        # TODO: calls function to distort points but should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         points_for_mainloss0 = distort_point(self.points_for_mainloss0, K_for_mainloss0)
         points_for_mainloss1 = distort_point(self.points_for_mainloss1, K_for_mainloss1)
         intersection,_,_,_ = get_intersection(points_for_mainloss0, points_for_mainloss1, f_for_mainloss0,

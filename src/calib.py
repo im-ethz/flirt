@@ -42,6 +42,7 @@ def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, flo
                     log_f1 = log_f1 * 0.7 * one
                     f0 = torch.exp(log_f0)
                     f1 = torch.exp(log_f1)
+                    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
                     undistorted_points0 = distort_point(normalized_points0, K0) / f0
                     undistorted_points1 = distort_point(normalized_points1, K1) / f1
                     fundamental_matrix = get_fundamental_matrix(undistorted_points0, undistorted_points1)
@@ -57,6 +58,7 @@ def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, flo
     f0 = torch.exp(log_f0)
     f1 = torch.exp(log_f1)
     essential_matrix = essential_matrix.view(3, 3)
+    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
     undistorted_points0 = distort_point(normalized_points0, K0) / f0
     undistorted_points1 = distort_point(normalized_points1, K1) / f1
     if base_point[0, 2] == 0:
@@ -113,6 +115,7 @@ def calib_1cam(current_cam_id, calibrated_points, normalized_map_point_info, n_c
     best = 1e10
     for K in range(5):
         K = K * 0.1 * one
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
         undistorted_points = distort_point(normalized_cam_point, K)
         homography_matrix = get_homography_matrix(undistorted_points, map_points)
         camera_matrix = homography_to_camera(homography_matrix)
