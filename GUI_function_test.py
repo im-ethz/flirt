@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.utils import saved_to_info, saved_normalize, get_precal_coords
+from src.utils import saved_to_info, get_normalized_points_dict, get_precal_coords
 from src.visualize import display_result, pointing_puttext
 from src.calib import calib_2cam, calib_1cam, calib_ncam
 
@@ -36,7 +36,7 @@ for cam_key in saved.keys():
 saved = saved2
 
 # point_info, map_point_info = saved_to_info(saved, n_cam)
-normalized_saved = saved_normalize(saved, n_cam, cam)
+normalized_saved = get_normalized_points_dict(saved, n_cam, cam)
 normalized_point_info, normalized_map_point_info = saved_to_info(normalized_saved, n_cam)
 
 parameters_dict = calib_2cam(normalized_point_info, normalized_map_point_info,
