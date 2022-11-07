@@ -8,7 +8,7 @@ from tkinter import ttk
 from tkinter import Frame
 from tkinter import filedialog as fd
 
-from src.utils import saved_normalize, saved_to_info, get_precal_coords, get_calibrated_points
+from src.utils import get_normalized_points_dict, saved_to_info, get_precal_coords, get_calibrated_points
 from src.calib import calib_2cam, calib_ncam, calib_1cam
 
 img_filetypes = (
@@ -746,7 +746,7 @@ class CalibGUI(tk.Frame):
         self.update_point_list()
 
     def calibrate_2cams(self,):
-        normalized_saved = saved_normalize(self.point_data, self.n_cam, self.cam_shape)
+        normalized_saved = get_normalized_points_dict(self.point_data, self.n_cam, self.cam_shape)
         normalized_point_info, normalized_map_point_info = saved_to_info(normalized_saved, self.n_cam)
 
         parameters_dict = calib_2cam(normalized_point_info, normalized_map_point_info,
@@ -760,7 +760,7 @@ class CalibGUI(tk.Frame):
             self.calib_param[calib_idx] = parameters_dict[calib_idx]
     
     def calibrate_ncams(self,):
-        normalized_saved = saved_normalize(self.point_data, self.n_cam, self.cam_shape)
+        normalized_saved = get_normalized_points_dict(self.point_data, self.n_cam, self.cam_shape)
         normalized_point_info, normalized_map_point_info = saved_to_info(normalized_saved, self.n_cam)
 
 
@@ -778,7 +778,7 @@ class CalibGUI(tk.Frame):
             self.calib_param[calib_idx] = parameters_dict[calib_idx]
 
     def calibrate_1cam(self,):
-        normalized_saved = saved_normalize(self.point_data, self.n_cam, self.cam_shape)
+        normalized_saved = get_normalized_points_dict(self.point_data, self.n_cam, self.cam_shape)
         normalized_point_info, normalized_map_point_info = saved_to_info(normalized_saved, self.n_cam)
     
         calibrated_points = get_precal_coords(self.idx_img1,
