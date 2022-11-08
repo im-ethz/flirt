@@ -1,3 +1,3 @@
 # You need pyinstaller: pip install pyinstaller
-VERSION='v0.0.3'
+VERSION='v0.0.4'
 pyinstaller --onefile --windowed -n "calibri-${VERSION}" --noconfirm "${PWD}/run_gui.py"
