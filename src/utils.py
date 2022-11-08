@@ -5,8 +5,27 @@ import numpy as np
 import torch.nn.functional as F
 
 
-def get_intersection(points0, points1, f0, R_inv0, t0,f1,R_inv1, t1):
-    """카메라의 점, 카메라 파라미터가 서로 다른 카메라에 있는 2개 점에 대해 주어졌을 때 교점을 구하는 함수"""
+def get_intersection(points0, points1, f0, R_inv0, t0, f1, R_inv1, t1):
+    """
+    카메라의 점, 카메라 파라미터가 서로 다른 카메라에 있는 2개 점에 대해 주어졌을 때 교점을 구하는 함수
+    Point of camera, function to find intersections when camera parameters are given for two points on different cameras
+
+    Args:
+        points0 (torch.Tensor): 2D points on camera 0
+        points1 (torch.Tensor): 2D points on camera 1
+        f0 (torch.Tensor): focal length of camera 0
+        R_inv0 (torch.Tensor): inverse rotation matrix of camera 0
+        t0 (torch.Tensor): translation vector of camera 0
+        f1 (torch.Tensor): focal length of camera 1
+        R_inv1 (torch.Tensor): inverse rotation matrix of camera 1
+        t1 (torch.Tensor): translation vector of camera 1
+        
+    Returns:
+        intersection (torch.Tensor): 3D points of intersection
+        distance0 (torch.Tensor): distance from camera 0 to intersection
+        distance1 (torch.Tensor): distance from camera 1 to intersection
+        errors (torch.Tensor): error of intersection
+    """
     vector0 = points0 / f0
     vector0 = torch.matmul(R_inv0, F.pad(vector0, [0, 1], value=1).unsqueeze(2)).squeeze(2)
     vector0 = vector0 / torch.sqrt(torch.sum(vector0 ** 2, dim=1, keepdim=True))
@@ -26,7 +45,20 @@ def get_intersection(points0, points1, f0, R_inv0, t0,f1,R_inv1, t1):
     return intersection, distance0, distance1, errors
 
 def get_calibrated_points(parameters, cam_shape, num_points=10, offset=10):
-    """calibrate 된 카메라 화면에 등간격으로 점을 찍고, 이 점들을 평면도에 mapping한 결과를 띄우거나 저장하는 함수"""
+    """
+    calibrate 된 카메라 화면에 등간격으로 점을 찍고, 이 점들을 평면도에 mapping한 결과를 띄우거나 저장하는 함수
+    A function that displays or stores the results of dotting the calibrated camera screen at equal intervals and mapping these dots to the floor plan
+    
+    Args:
+        parameters (torch.Tensor): parameters of camera
+        cam_shape (tuple): shape of camera
+        num_points (int): number of points to be calibrated
+        offset (int): offset of points to be calibrated
+
+    Returns:
+        cam_point (torch.Tensor): calibrated points
+        ground_point (torch.Tensor): mapped points
+    """
     spacing_x = (cam_shape[1] - (2 * offset)) / (num_points - 1)
     spacing_y = (cam_shape[0] - (2 * offset)) / (num_points - 1)
     
@@ -40,8 +72,20 @@ def get_calibrated_points(parameters, cam_shape, num_points=10, offset=10):
     return cam_point, ground_point
 
 def cam_to_plane(normalized_cam_point, parameters):
+    """
+    카메라의 점을 평면도에 mapping하는 함수
+    A function that maps points on the camera to the floor plan
+
+    Args:
+        normalized_cam_point (torch.Tensor): normalized points on camera
+        parameters (torch.Tensor): parameters of camera
+
+    Returns:
+        ground_point (torch.Tensor): mapped points
+    """
     thetas, t, f, K = torch.split(parameters, [3, 3, 1, 1])
     R = thetas_to_R(thetas.unsqueeze(0), True).squeeze(0)
+    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
     undistorted_cam_point = distort_point(normalized_cam_point, K)
     vector0 = undistorted_cam_point / f
     vector0 = torch.matmul(torch.inverse(R).unsqueeze(0),
@@ -51,10 +95,21 @@ def cam_to_plane(normalized_cam_point, parameters):
     return ground_point[:,:2]
 
 
-def saved_normalize(saved, n_cam, cam):
-    """saved에 저장된 값들은 픽셀 좌표라 값들이 100~1000scale이며 모두 양수이다. 중심을 이미지의 중심으로 맞춰주고,
-     scale을 1 근처로 맞춰준다."""
-    normalized_saved = copy.deepcopy(saved)
+def get_normalized_points_dict(points_dict, n_cam, cam):
+    """
+    Normalize the points in the cam point dict. 
+    After normalization 0 corresponds to the center of the image and
+    1 is the maximum distance from the center of the image.
+
+    Args:
+        points_dict (dict dict{cam_idx (int): dict{point_idx (int): (x (int), y (int))}}): point data
+        n_cam (int): number of cameras
+        cam (dict dict{cam_idx (int): }): camera shape data in height, width, channel order
+
+    Returns:
+        normalized_saved (torch.Tensor): normalized saved points
+    """
+    normalized_saved = copy.deepcopy(points_dict)
     for camid in range(n_cam):
         points = []
         for pointid in normalized_saved[camid].keys():
@@ -68,14 +123,35 @@ def saved_normalize(saved, n_cam, cam):
     return normalized_saved
 
 def normalize_points_by_image(points, cam_shape_xy):
+    """
+    Normalizes points with respect to the center of the camera
+
+    Args:
+        points (np.array): points on camera
+        cam_shape_xy (tuple): shape of camera
+
+    Returns:
+        normalized_points (np.array): normalized points
+    """
     image_center = torch.tensor(cam_shape_xy, dtype=torch.float32) / 2
     image_norm_length = torch.sqrt(torch.mean(image_center ** 2))
     normalized_points = (points - image_center[None]) / image_norm_length
     return normalized_points
 
 def optimize_parameters(parameters, loss_function, num_iter):
-    """뉴턴법으로 local_minima 찾는 함수
-    이 함수가 시간이 가장 오래 걸림"""
+    """
+    뉴턴법으로 local_minima 찾는 함수. 이 함수가 시간이 가장 오래 걸림
+    Function to find local_minima by Newton method. This function takes the longest time
+
+    Args:
+        parameters (torch.Tensor): parameters of camera
+        loss_function (function): loss function
+        num_iter (int): number of iterations
+
+    Returns:
+        best_parameters (torch.Tensor): optimized parameters
+        best_loss (float): optimized loss
+    """
     best_loss = loss_function(parameters)
     best_parameters = parameters
     prev_best_loss = 1e21
@@ -114,7 +190,17 @@ def optimize_parameters(parameters, loss_function, num_iter):
     return best_parameters.detach(), best_loss
 
 def distort_point(point, distortion_parameters):
-    """렌즈왜곡 펴는 함수"""
+    """
+    렌즈왜곡 펴는 함수
+    Function to distort the lens
+
+    Args:
+        point (torch.Tensor): point on camera
+        distortion_parameters (torch.Tensor): distortion parameters
+
+    Returns:
+        point (torch.Tensor): distorted point
+    """
     x = point[:,0:1]
     y = point[:,1:2]
     r_square = x**2 + y**2
@@ -122,6 +208,16 @@ def distort_point(point, distortion_parameters):
     return point
 
 def R_to_thetas(R, change_system):
+    """
+    Function to convert rotation matrix to rotation angle
+
+    Args:
+        R (torch.Tensor): rotation matrix
+        change_system (bool): change system or not
+
+    Returns:
+        thetas (torch.Tensor): rotation angle
+    """
     if change_system:
         R = R * torch.tensor([1, 1, -1], dtype=torch.float32).unsqueeze(0)
     thetax = torch.atan2(R[2,1],R[2,2])
@@ -131,6 +227,16 @@ def R_to_thetas(R, change_system):
     return thetas
 
 def thetas_to_R(thetas, change_system):
+    """
+    Function to convert rotation angle to rotation matrix
+
+    Args:
+        thetas (torch.Tensor): rotation angle
+        change_system (bool): change system or not
+
+    Returns:
+        R (torch.Tensor): rotation matrix
+    """
     zero = torch.zeros(thetas.shape[0],dtype=torch.float32,device=thetas.device)
     thetas_x, thetas_y, thetas_z = thetas[:,0], thetas[:,1], thetas[:,2]
     Rx = torch.stack([torch.stack([zero + 1, zero, zero], dim=1),
@@ -148,6 +254,16 @@ def thetas_to_R(thetas, change_system):
     return R
 
 def homography_equation(points0, points1):
+    """
+    Homography equation
+
+    Args:
+        points0 (torch.Tensor): points on camera 0
+        points1 (torch.Tensor): points on camera 1
+
+    Returns:
+        homography_equation_matrix (torch.Tensor): A matrix
+    """
     x = points0[:, :1]
     y = points0[:, 1:]
     x, y, z = x / torch.sqrt(x ** 2 + y ** 2 + 1), y / torch.sqrt(x ** 2 + y ** 2 + 1), 1 / torch.sqrt(
@@ -170,6 +286,16 @@ def homography_equation(points0, points1):
     return homography_equation_matrix
 
 def fundamental_equation(points0, points1):
+    """
+    Fundamental equation
+
+    Args:
+        points0 (torch.Tensor): points on camera 0
+        points1 (torch.Tensor): points on camera 1
+
+    Returns:
+        eight_point_matrix (torch.Tensor): A matrix
+    """
     x = points0[:, :1]
     y = points0[:, 1:]
     x,y,z = x/torch.sqrt(x**2+y**2+1),y / torch.sqrt(x ** 2 + y ** 2 + 1),1 / torch.sqrt(x ** 2 + y ** 2 + 1)
@@ -182,7 +308,16 @@ def fundamental_equation(points0, points1):
     return eight_point_matrix
 
 def homography_to_camera(homography_matrix):
-    """homography matrix에서 camera matirx를 구한다."""
+    """
+    homography matrix에서 camera matirx를 구한다.
+    Find the camera matrix from the homography matrix.
+
+    Args:
+        homography_matrix (torch.Tensor): homography matrix
+
+    Returns:
+        camera_matrix (torch.Tensor): camera matrix
+    """
     a0sq = torch.sum(homography_matrix[0, :2] ** 2, dim=0, keepdim=True)
     a1sq = torch.sum(homography_matrix[1, :2] ** 2, dim=0, keepdim=True)
     a0dota1 = torch.sum(homography_matrix[0, :2] * homography_matrix[1, :2], dim=0, keepdim=True)
@@ -198,8 +333,20 @@ def homography_to_camera(homography_matrix):
     return camera_matrix
 
 def saved_to_info(saved, n_cam):
-    """cam_id 기준으로 point_id들이 저장되어 있는 것이 saved였다면 point_id 기준으로 cam_id들을 저장한 것이 point_info이고,
-    특히 minimap과 대응된 point_id의 경우 map_point_info에 저장된다."""
+    """
+    cam_id 기준으로 point_id들이 저장되어 있는 것이 saved였다면 point_id 기준으로 cam_id들을 저장한 것이 point_info이고,
+    특히 minimap과 대응된 point_id의 경우 map_point_info에 저장된다.
+    If point_id is saved based on cam_id, point_info is saved based on point_id.
+    In particular, point_id corresponding to minimap is stored in map_point_info.
+
+    Args:
+        points_dict (dict{cam_idx (int): dict{point_idx (int): (x (int/float), y (int/float))}}): point data
+        n_cam (int): 
+
+    Returns:
+        point_info (dict{}): 
+        map_point_info (list): 
+    """
     map_point_info = {}
     for point_id in saved[n_cam].keys():
         for cam_index in range(n_cam + 1):
@@ -223,7 +370,21 @@ def saved_to_info(saved, n_cam):
     return point_info, map_point_info
 
 def extract_pair(point_info, cam_id, floor_list):
-    """딕셔너리로 된 point_info를 tensor로 바꿔준다."""
+    """
+    딕셔너리로 된 point_info를 tensor로 바꿔준다
+    Change the dictionary point_info to tensor
+
+    Args:
+        point_info (list): 
+        cam_id (int): 
+        floor_list (list):
+    
+    Returns:
+        matching0 (torch.Tensor):
+        matching1 (torch.Tensor):
+        n_matching (int):
+        pair_floor_list (list):
+    """
     matching0 = []
     matching1 = []
     pair_floor_list = []
@@ -243,7 +404,20 @@ def extract_pair(point_info, cam_id, floor_list):
     return matching0, matching1, n_matching, pair_floor_list
 
 def extract_1cam_map(map_point_info, camid, n_cam):
-    """extract_pair와 비슷한데 map 대응점 처리하는 함수"""
+    """
+    extract_pair와 비슷한데 map 대응점 처리하는 함수
+    A function that handles map correspondence points similar to extract_pair
+
+    Args:
+        map_point_info (list):
+        camid (int):
+        n_cam (int): 
+    
+    Returns:
+        cam_matching (torch.Tensor):
+        map_matching (torch.Tensor): 
+        map_matching_ids (torch.Tensor):
+    """
     cam_matching = []
     map_matching = []
     map_matching_ids = []
@@ -261,7 +435,20 @@ def extract_1cam_map(map_point_info, camid, n_cam):
     return cam_matching, map_matching, map_matching_ids
 
 def matching_to_base_reach(map_matching, normalized_cam_point):
-    """두 카메라에 의해 구성된 가상의 3D 공간을 평면도로 matching 시키기 위한 두 점을 골라주는 함수"""
+    """
+    두 카메라에 의해 구성된 가상의 3D 공간을 평면도로 matching 시키기 위한 두 점을 골라주는 함수
+    A function that selects two points to match a virtual 3D space constructed by two cameras in a plan view
+
+    Args:
+        map_matching (torch.Tensor):
+        normalized_cam_point (torch.Tensor):
+
+    Returns:
+        base_point (torch.Tensor):
+        reach_point (torch.Tensor):
+        base_minimap_points (torch.Tensor):
+        reach_minimap_points (torch.Tensor):
+    """
     torch_map_matching = torch.cat([map_matching[i] for i in range(len(map_matching))], dim=0)
     torch_idx_to_set_idx = {}
     index = 0
@@ -288,14 +475,35 @@ def matching_to_base_reach(map_matching, normalized_cam_point):
     return base_point, reach_point, base_minimap_points, reach_minimap_points
 
 def normalize_points(points):
+    """
+    A function that normalizes 2D points
+
+    Args:
+        points (torch.Tensor):
+
+    Returns:
+        points (torch.Tensor):
+        mean_radius (torch.Tensor):
+        center (torch.Tensor):
+    """
     center = torch.mean(points, dim=0,keepdim=True)
     points = points - center
     mean_radius = torch.sqrt(torch.mean(torch.sum(points ** 2, dim=1),dim=0,keepdim=True)/2)
     points = points / mean_radius
-    return points,mean_radius,center
+    return points, mean_radius, center
 
 def get_fundamental_matrix(normalized_points0, normalized_points1):
-    """normalized 8_point algorithm으로 fundamental_matrix를 구한다."""
+    """
+    normalized 8_point algorithm으로 fundamental_matrix를 구한다.
+    Obtain fundamental_matrix with normalized 8_point algorithm.
+
+    Args:
+        normalized_points0 (torch.Tensor):
+        normalized_points1 (torch.Tensor):
+
+    Returns:
+        fundamental_matrix (torch.Tensor):
+    """
     zero = torch.zeros(1, dtype=torch.float32,device=normalized_points0.device)
     normalizedforF_points0,mean_length0,center_fornorm0 = normalize_points(normalized_points0)
     normalizedforF_points1,mean_length1,center_fornorm1 = normalize_points(normalized_points1)
@@ -311,7 +519,17 @@ def get_fundamental_matrix(normalized_points0, normalized_points1):
     return fundamental_matrix
 
 def get_homography_matrix(normalized_cam_point, map_points):
-    """normalized 8_point algorithm과 비슷한 방법으로 homography_matrix를 구한다."""
+    """
+    normalized 8_point algorithm과 비슷한 방법으로 homography_matrix를 구한다.
+    The homography_matrix is obtained in a similar manner to the normalized 8_point algorithm.
+
+    Args:
+        normalized_cam_point (torch.Tensor):
+        map_points (torch.Tensor):
+
+    Returns:
+        homography_matrix (torch.Tensor):
+    """
     cam_normalizedforF_points,cam_mean_length,cam_center_fornorm = normalize_points(normalized_cam_point)
     map_normalizedforF_points,map_mean_length,map_center_fornorm = normalize_points(map_points)
 
@@ -328,23 +546,56 @@ def get_homography_matrix(normalized_cam_point, map_points):
     return homography_matrix
 
 def normalize_points(points):
-    """주어진 점들의 중심을 (0,0)으로 하고 중심으로부터의 거리를 루트(2)가 되게 normalize"""
+    """
+    주어진 점들의 중심을 (0,0)으로 하고 중심으로부터의 거리를 루트(2)가 되게 normalize
+    Normalize the center of the given points to be (0,0) and the distance from the center to root (2)
+
+    Args:
+        points (torch.Tensor):
+
+    Returns:
+        points (torch.Tensor):
+        mean_radius (torch.Tensor):
+        center (torch.Tensor):
+    """
     center = torch.mean(points, dim=0,keepdim=True)
     points = points - center
     mean_radius = torch.sqrt(torch.mean(torch.sum(points ** 2, dim=1),dim=0,keepdim=True)/2)
     points = points / mean_radius
-    return points,mean_radius,center
+    return points, mean_radius, center
 
 class loss_essential_matrix():
-    """essential matrix constraint, point correspondence constraint를 가장 잘 만족시키는 E, K,f를 찾는 함수"""
+    """
+    essential matrix constraint, point correspondence constraint를 가장 잘 만족시키는 E, K,f를 찾는 함수
+    A function that finds E, K, and f that best satisfies the essential matrix constraint, point response constraint
+    """
     def __init__(self, normalized_points0, normalized_points1):
+        """
+        Constructs
+
+        Args:
+            normalized_points0 (torch.Tensor):
+            normalized_points1 (torch.Tensor):
+        """
         self.normalized_points0 = normalized_points0
         self.normalized_points1 = normalized_points1
+    
     def loss(self, parameters):
+        """
+        loss function
+
+        Args:
+            parameters (torch.Tensor): 
+
+        Returns:
+            loss (torch.Tensor): loss
+        """
         fundamental_matrix, K0, K1, log_f0, log_f1 = torch.split(parameters, [9, 1, 1, 1, 1])
         fundamental_matrix = fundamental_matrix.view(3, 3)
         f0 = torch.exp(log_f0)
         f1 = torch.exp(log_f1)
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted 
+        # and the epipolar geometry assumption that is used to compute the fundamental matrix expects undistorted points.
         undistorted_points0 = distort_point(self.normalized_points0, K0) / f0
         undistorted_points1 = distort_point(self.normalized_points1, K1) / f1
 
@@ -366,7 +617,19 @@ class loss_essential_matrix():
         return loss
 
 def essential_matrix_decomposition(E, normalized_points0, normalized_points1):
-    """E에서 T,R을 찾는 함수"""
+    """
+    E에서 T,R을 찾는 함수
+    A function that finds T, R from E
+
+    Args:
+        E (torch.Tensor):
+        normalized_points0 (torch.Tensor):
+        normalized_points1 (torch.Tensor):
+
+    Returns:
+        T (torch.Tensor):
+        R (torch.Tensor):
+    """
     n_points = normalized_points0.shape[0]
     best_n_pos_depth = 0
     u, s, v = torch.svd(E)
@@ -405,7 +668,26 @@ def essential_matrix_decomposition(E, normalized_points0, normalized_points1):
 
 def match_minimap(intersection_on_floor, base_point, reach_point, base_minimap_points,
                   reach_minimap_points, R, T, cam0_to_cam1):
-    """두 카메라에서 생성된 가상의 3D공간을 평면도와 matching한다."""
+    """
+    두 카메라에서 생성된 가상의 3D공간을 평면도와 matching한다.
+    Matches the virtual 3D space created from two cameras to the floor plan.
+
+    Args:
+        intersection_on_floor (torch.Tensor): 3D intersection points on the floor plan
+        base_point (torch.Tensor): 3D base point
+        reach_point (torch.Tensor): 3D reach point
+        base_minimap_points (torch.Tensor): 2D base points on the floor plan
+        reach_minimap_points (torch.Tensor): 2D reach points on the floor plan
+        R (torch.Tensor): Rotation matrix
+        T (torch.Tensor): Translation vector
+        cam0_to_cam1 (torch.Tensor): Translation vector from cam0 to cam1
+
+    Returns:
+        thetas0 (torch.Tensor): Rotation angles of the base point
+        thetas1 (torch.Tensor): Rotation angles of the reach point
+        t0 (torch.Tensor): Translation vector
+        t1 (torch.Tensor): Translation vector
+    """
     intersection_on_floor_save = intersection_on_floor
     intersection_on_floor = intersection_on_floor - torch.mean(intersection_on_floor, dim=0, keepdim=True)
     normal_vector_floor = torch.svd(intersection_on_floor)[2][:, 2]
@@ -439,6 +721,19 @@ def match_minimap(intersection_on_floor, base_point, reach_point, base_minimap_p
     return thetas0, thetas1, t0, t1
 
 def cam_to_plane_2cam(points, distance_to_floor, normal_vector_floor, R, cam0_to_cam1):
+    """
+    Maps 3D points created from the camera to the floor plan.
+
+    Args:
+        points (torch.Tensor): 3D points
+        distance_to_floor (float): Distance to the floor plan
+        normal_vector_floor (torch.Tensor): Normal vector of the floor plan
+        R (torch.Tensor): Rotation matrix
+        cam0_to_cam1 (torch.Tensor): Translation vector from cam0 to cam1
+
+    Returns:
+        points_world (torch.Tensor): 3D points on the floor plan
+    """
     points_world =[]
     for i in range(points.shape[0]):
         if points[i:i+1, 2] == 0:
@@ -457,12 +752,35 @@ def cam_to_plane_2cam(points, distance_to_floor, normal_vector_floor, R, cam0_to
     return points_world
 
 def cross_product(a, b):
+    """
+    Calculates the cross product of two vectors.
+    
+    Args:
+        a (torch.Tensor): Vector a
+        b (torch.Tensor): Vector b
+
+    Returns:
+        cross_product (torch.Tensor): Cross product of a and b
+    """
     return torch.stack([a[:,1]*b[:,2]-a[:,2]*b[:,1],
                                  a[:,2]*b[:,0]-a[:,0]*b[:,2],
                                  a[:,0]*b[:,1]-a[:,1]*b[:,0]],dim=1)
 
 def get_precal_coords(current_cam_id, calibrated_camids, parameters_dict, normalized_point_info, floor_list):
-    """이미 calibrate 된 카메라의 바닥 점들의 평면도 대응점의 좌표를 구하는 함수"""
+    """
+    이미 calibrate 된 카메라의 바닥 점들의 평면도 대응점의 좌표를 구하는 함수
+    A function that obtains the coordinates of the corresponding points of the floor plan of the already calibrated camera
+
+    Args:
+        current_cam_id (int):
+        calibrated_camids (list):
+        parameters_dict (dict):
+        normalized_point_info (dict):
+        floor_list (list):
+
+    Returns:
+        calibrated_points (list):
+    """
     calibrated_camids = set(calibrated_camids)
     calibrated_points = {}
     for point_id in normalized_point_info.keys():
@@ -491,18 +809,35 @@ def get_precal_coords(current_cam_id, calibrated_camids, parameters_dict, normal
     return calibrated_points
 
 class ground_1camloss():
-    """camera matrix의 constraint, correspondence constraint를 표현하는 loss function을 구한다."""
+    """
+    camera matrix의 constraint, correspondence constraint를 표현하는 loss function을 구한다.
+    Find the loss function that expresses the constriction and corresponse constriction of the camera matrix.
+    """
     def __init__(self, map_points, normalized_cam_point):
+        """
+        Args:
+            map_points (torch.Tensor): 3D points on the floor plan
+            normalized_cam_point (torch.Tensor): 2D points on the camera
+        """
         self.map_points = map_points
         self.normalized_cam_point = normalized_cam_point
 
     def loss(self, parameters):
+        """
+        Args:
+            parameters (torch.Tensor): Camera parameters
+            
+        Returns:
+            loss (torch.Tensor): Loss value
+        """
         camera_matrix,K = torch.split(parameters,[12,1])
         camera_matrix = camera_matrix.view(3,4)
         homography_matrix = camera_matrix[:,[0,1,3]]
         est_cam_points = torch.matmul(homography_matrix.unsqueeze(0),
                                     F.pad(self.map_points, [0, 1], value=1).unsqueeze(2)).squeeze(2)
         est_cam_points = est_cam_points[:, :2] / est_cam_points[:, 2:]
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         undistorted_cam_point = distort_point(self.normalized_cam_point, K)
 
         normalizing_factor = normalize_points(undistorted_cam_point)[1]
@@ -521,7 +856,20 @@ class ground_1camloss():
         return loss
 
 def camera_matrix_to_caminfo(camera_matrix, norm_factor_map, center_for_norm_map):
-    """camera_matrix에서 theta,t,f를 구한다."""
+    """
+    camera_matrix에서 theta,t,f를 구한다.
+    Get theta, t, f from camera_matrix
+
+    Args:
+        camera_matrix (torch.Tensor): Camera matrix
+        norm_factor_map (torch.Tensor): Normalization factor
+        center_for_norm_map (torch.Tensor): Normalization center
+
+    Returns:
+        thetas (torch.Tensor): Rotation angle
+        t (torch.Tensor): Translation vector
+        f (torch.Tensor): Focal length
+    """
     camera_matrix = camera_matrix.view(3, 4)
     KR = camera_matrix[:, :3]
     u, s, v = torch.svd(KR)
@@ -541,17 +889,41 @@ def camera_matrix_to_caminfo(camera_matrix, norm_factor_map, center_for_norm_map
     t = t * norm_factor_map + F.pad(center_for_norm_map.squeeze(0), [0, 1])
     f = s[1:2] / s[2:]
     thetas = R_to_thetas(R, True)
-    return thetas,t,f
+    return thetas, t, f
 
 def world_to_cam(point, t, R, f):
+    """
+    Convert 3D point to camera coordinate.
+
+    Args:
+        point (torch.Tensor): 3D point
+        t (torch.Tensor): Translation vector
+        R (torch.Tensor): Rotation matrix
+        f (torch.Tensor): Focal length
+        
+    Returns:
+        point (torch.Tensor): 3D point in camera coordinate
+    """
     point = torch.matmul(R, (point - t).unsqueeze(2)).squeeze(2)
     point = point[:, :2] / point[:, 2:]
     point = f * point
     return point
 
 class make_loss_for_n():
-    """n_camera에 대한 constraint들을 표현한 loss를 구하는 함수"""
+    """
+    n_camera에 대한 constraint들을 표현한 loss를 구하는 함수
+    A function that obtains a loss representing constructs for n_camera
+    """
     def __init__(self, normalized_saved, cam_list, n_cam, normalized_map_point_info, normalized_point_info, floor_list):
+        """
+        Args:
+            normalized_saved (torch.Tensor): Normalized 2D points on the camera
+            cam_list (list): List of camera parameters
+            n_cam (int): Number of cameras
+            normalized_map_point_info (torch.Tensor): Normalized 3D points on the floor plan
+            normalized_point_info (torch.Tensor): Normalized 2D points on the camera
+            floor_list (list): List of floor plan parameters
+        """
         self.normalized_saved = normalized_saved
         self.cam_list = cam_list
         self.n_cam = n_cam
@@ -604,6 +976,13 @@ class make_loss_for_n():
             .unsqueeze(0).unsqueeze(2).expand(1,len(self.cam_index_for_mainloss1),24)
 
     def loss(self, parameters):
+        """
+        Args:
+            parameters (torch.Tensor): Parameters of the camera and floor plan
+            
+        Returns:
+            loss (torch.Tensor): Loss
+        """
         parameters = parameters.view(-1, 8)
         thetas, t, f, K = torch.split(parameters, [3, 3, 1, 1], dim=1)
         R = thetas_to_R(thetas, True)
@@ -612,6 +991,7 @@ class make_loss_for_n():
         current_index = 0
         for index in range(len(self.cam_list)):
             next_index = current_index+self.n_points_incam[index]
+            # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
             undistorted_points = distort_point(self.points_for_norm_factor[current_index:next_index], K[index])
             current_index = next_index
             normalizing_factor.append(normalize_points(undistorted_points)[1])
@@ -628,6 +1008,8 @@ class make_loss_for_n():
         norm_factor_for_map_loss = torch.split(infos_for_map_loss, [9, 9, 3,1,1,1], dim=1)
         R_for_map_loss = R_for_map_loss.view(-1,3,3)
 
+        # TODO: calls function to distort points but should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         points_for_maploss = distort_point(self.points_for_maploss, K_for_map_loss)
         map_point_cam = torch.matmul(R_for_map_loss, (self.map_points - t_for_map_loss).unsqueeze(2)).squeeze(2)
         map_point_cam = map_point_cam[:,:2] / map_point_cam[:, 2:]
@@ -647,6 +1029,8 @@ class make_loss_for_n():
         R_inv_for_mainloss0 = R_inv_for_mainloss0.view(-1, 3, 3)
         R_for_mainloss1 = R_for_mainloss1.view(-1, 3, 3)
         R_inv_for_mainloss1 = R_inv_for_mainloss1.view(-1, 3, 3)
+        # TODO: calls function to distort points but should be undistorting points here not distorting them to compare them 
+        # in the loss function below with undistorted points transformed from the top-view
         points_for_mainloss0 = distort_point(self.points_for_mainloss0, K_for_mainloss0)
         points_for_mainloss1 = distort_point(self.points_for_mainloss1, K_for_mainloss1)
         intersection,_,_,_ = get_intersection(points_for_mainloss0, points_for_mainloss1, f_for_mainloss0,

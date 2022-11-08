@@ -20,6 +20,16 @@ from src.utils import essential_matrix_decomposition
 def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, floor_list, n_cam):
     """
     Calibrate 2 cameras together with a minimap
+    
+    Args:
+        normalized_point_info: dictionary of normalized points for each camera
+        normalized_map_point_info: dictionary of normalized points for the minimap
+        cam0: id of the first camera
+        cam1: id of the second camera
+        floor_list: list of floor ids
+
+    Returns:
+        parameters_dict: dictionary of parameters for each camera
     """
     normalized_points0, normalized_points1, n_matching, pair_floor_list = \
         extract_pair(normalized_point_info, [cam0, cam1], floor_list)
@@ -42,6 +52,7 @@ def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, flo
                     log_f1 = log_f1 * 0.7 * one
                     f0 = torch.exp(log_f0)
                     f1 = torch.exp(log_f1)
+                    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
                     undistorted_points0 = distort_point(normalized_points0, K0) / f0
                     undistorted_points1 = distort_point(normalized_points1, K1) / f1
                     fundamental_matrix = get_fundamental_matrix(undistorted_points0, undistorted_points1)
@@ -57,6 +68,7 @@ def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, flo
     f0 = torch.exp(log_f0)
     f1 = torch.exp(log_f1)
     essential_matrix = essential_matrix.view(3, 3)
+    # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
     undistorted_points0 = distort_point(normalized_points0, K0) / f0
     undistorted_points1 = distort_point(normalized_points1, K1) / f1
     if base_point[0, 2] == 0:
@@ -92,6 +104,19 @@ def calib_2cam(normalized_point_info, normalized_map_point_info, cam0, cam1, flo
     return parameters_dict
 
 def calib_1cam(current_cam_id, calibrated_points, normalized_map_point_info, n_cam, normalized_saved):
+    """
+    Calibrate one camera
+
+    Args:
+        current_cam_id: id of the camera to calibrate
+        calibrated_points: dictionary of calibrated points
+        normalized_map_point_info: dictionary of normalized map points
+        n_cam: number of cameras
+        normalized_saved: dictionary of normalized points
+
+    Returns:
+        parameters: calibrated parameters
+    """
     cam_matching, map_matching, map_matching_ids = extract_1cam_map(normalized_map_point_info,
                                                                     current_cam_id, n_cam)
     if len(set(calibrated_points.keys()) - set(map_matching_ids)) == 0:
@@ -113,6 +138,7 @@ def calib_1cam(current_cam_id, calibrated_points, normalized_map_point_info, n_c
     best = 1e10
     for K in range(5):
         K = K * 0.1 * one
+        # TODO: calls function to distort points but output variable name is confusing (should be 'distorted_cam_point'). Moreover should be undistorting points here not distorting them as the image points are already distorted
         undistorted_points = distort_point(normalized_cam_point, K)
         homography_matrix = get_homography_matrix(undistorted_points, map_points)
         camera_matrix = homography_to_camera(homography_matrix)
@@ -132,6 +158,20 @@ def calib_1cam(current_cam_id, calibrated_points, normalized_map_point_info, n_c
     return parameters
 
 def calib_ncam(parameters_dict, normalized_saved, n_cam, normalized_map_point_info, normalized_point_info, floor_list):
+    """
+    Calibrate all cameras
+
+    Args: 
+        parameters_dict: 
+        normalized_saved:
+        n_cam: number of cameras
+        normalized_map_point_info: dictionary of normalized map points
+        normalized_point_info: dictionary of normalized image points
+        floor_list: list of floor points
+
+    Returns:
+        parameters_dict: calibrated parameters
+    """
     cam_list = sorted(list(parameters_dict.keys()))
     parameters = torch.cat([parameters_dict[key] for key in cam_list],dim=0).requires_grad_(True)
     loss_function = make_loss_for_n(normalized_saved, cam_list,
