@@ -109,7 +109,7 @@ def get_normalized_points_dict(points_dict, n_cam, img_shape_hwc):
     Returns:
         normalized_saved (torch.Tensor): normalized saved points
     """
-    normalized_saved = copy.deepcopy(saved)
+    normalized_saved = copy.deepcopy(points_dict)
     for camid in range(n_cam):
         points = []
         for pointid in normalized_saved[camid].keys():
