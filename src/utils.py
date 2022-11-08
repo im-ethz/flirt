@@ -95,7 +95,7 @@ def cam_to_plane(normalized_cam_point, parameters):
     return ground_point[:,:2]
 
 
-def get_normalized_points_dict(points_dict, n_cam, img_shape_hwc):
+def get_normalized_points_dict(points_dict, n_cam, cam):
     """
     Normalize the points in the cam point dict. 
     After normalization 0 corresponds to the center of the image and
@@ -104,7 +104,7 @@ def get_normalized_points_dict(points_dict, n_cam, img_shape_hwc):
     Args:
         points_dict (dict dict{cam_idx (int): dict{point_idx (int): (x (int), y (int))}}): point data
         n_cam (int): number of cameras
-        img_shape_hwc (dict dict{cam_idx (int): }): camera shape data in height, width, channel order
+        cam (dict dict{cam_idx (int): }): camera shape data in height, width, channel order
 
     Returns:
         normalized_saved (torch.Tensor): normalized saved points
@@ -122,13 +122,13 @@ def get_normalized_points_dict(points_dict, n_cam, img_shape_hwc):
             index += 1
     return normalized_saved
 
-def normalize_points_by_image(points, img_shape_wh):
+def normalize_points_by_image(points, cam_shape_xy):
     """
     Normalizes points with respect to the center of the camera
 
     Args:
         points (np.array): points on camera
-        img_shape_wh (tuple): shape of camera
+        cam_shape_xy (tuple): shape of camera
 
     Returns:
         normalized_points (np.array): normalized points
@@ -332,7 +332,7 @@ def homography_to_camera(homography_matrix):
     camera_matrix = torch.cat([homography_matrix[:, :2], x.unsqueeze(1), homography_matrix[:, 2:]], dim=1)
     return camera_matrix
 
-def saved_to_info(points_dict, n_cam):
+def saved_to_info(saved, n_cam):
     """
     cam_id 기준으로 point_id들이 저장되어 있는 것이 saved였다면 point_id 기준으로 cam_id들을 저장한 것이 point_info이고,
     특히 minimap과 대응된 point_id의 경우 map_point_info에 저장된다.
