@@ -20,12 +20,12 @@ def main():
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane
 
-    images = glob.glob('/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_001_minyong_front_v2/*.jpg')
-    images = glob.glob('/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_003_minyong_v2/*.jpg')
-    images = glob.glob('/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_004_pete_v2/*.jpg')
-    images = glob.glob('/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_006_pete_v2/*.jpg')
-    images = glob.glob('/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_002_pete_front_v2/*.jpg')
+    path = "/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_001_minyong_front_v2/"
+    path = "/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_003_minyong_v2/"
+    path = "/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_004_pete_v2/"
+    path = "/Users/philipp/deepingsource/Projects/3rd_floor_checkerboard_images/onvif_002_pete_front_v2/"
 
+    images = glob.glob(path + "/*.jpg")
 
     for fname in images:
         print("Processing image: ", fname)
@@ -50,6 +50,8 @@ def main():
 
     # Calibration
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    # Store the results
+    np.savez(os.path.join(path, 'calibration.npz'), ret=ret, mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
 
     # Refine the camera matrix
     img = cv2.imread(images[0])
@@ -58,11 +60,15 @@ def main():
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
 
     # undistort
-    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    dst = cv2.undistort(img, mtx, dist, None, mtx)
+    cv2.imshow('Undistorted image', dst)
+    # undistort scaled
+    dst_scaled = cv2.undistort(img, mtx, dist, None, newcameramtx)
     # crop the image
     x, y, w, h = roi
-    dst = dst[y:y+h, x:x+w]
-    cv2.imshow('Undistorted image', dst)
+    dst_scaled = dst_scaled[y:y+h, x:x+w]
+    
+    cv2.imshow('Undistorted scaled image', dst_scaled)
 
     mean_error = 0
     for i in range(len(objpoints)):
@@ -71,9 +77,7 @@ def main():
         mean_error += error
     print( "total error: {}".format(mean_error/len(objpoints)) )
     
-    while True:
-        if cv2.waitKey(0) & 0xFF == ord('q'):
-            break
+    cv2.waitKey(15000)
 
 if __name__ == '__main__':
     main()
