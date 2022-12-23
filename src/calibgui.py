@@ -671,8 +671,7 @@ class CalibGUI(tk.Frame):
         self.canvas_minimap.update()
 
     def save(self, *args):
-        if self.save_dir == None:
-            self.save_dir = fd.askdirectory()
+        self.save_dir = fd.askdirectory()
         
         filenames = [os.path.splitext(f)[0] for f in self.img_files + [self.minimap_filename]]
         folder_name = "_".join(filenames)
