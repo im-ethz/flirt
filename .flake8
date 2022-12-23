@@ -1,0 +1,10 @@
+[flake8]
+select = B,C,E,F,P,T4,W,B9,Q0
+max-line-length = 120
+ignore =
+    W503, # Line break occurred before a binary operator
+    W504, # Line break occurred after a binary operator
+    E402, # Module level import not at top of file (for conditional import)
+    E741, # Do not use variables named 'I', 'O', or 'l'
+    F841 # Local variable name is assigned to but never used
+extend-ignore = E203 # Whitespace before ':' black
