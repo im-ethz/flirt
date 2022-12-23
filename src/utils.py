@@ -1,3 +1,5 @@
+import cv2
+import math
 import copy
 import torch
 
@@ -189,23 +191,28 @@ def optimize_parameters(parameters, loss_function, num_iter):
         i += 1
     return best_parameters.detach(), best_loss
 
-def distort_point(point, distortion_parameters):
+def to_homogeneous(points):
     """
-    렌즈왜곡 펴는 함수
-    Function to distort the lens
-
-    Args:
-        point (torch.Tensor): point on camera
-        distortion_parameters (torch.Tensor): distortion parameters
-
-    Returns:
-        point (torch.Tensor): distorted point
+    Reference:
+    https://github.com/magicleap/SuperGluePretrainedNetwork/blob/ddcf11f42e7e0732a0c4607648f9448ea8d73590/models/utils.py#L351
     """
-    x = point[:,0:1]
-    y = point[:,1:2]
+    return np.concatenate([points, np.ones_like(points[:, :1])], axis=-1)
+
+def distort_point(points, k0, k1=0):
+    """
+    Function to distort a point
+    References:
+    https://docs.nvidia.com/vpi/algo_ldc.html
+    https://stackoverflow.com/questions/60609607/how-to-create-this-barrel-radial-distortion-with-python-opencv
+    """
+
+    x = points[:,0:1]
+    y = points[:,1:2]
+
     r_square = x**2 + y**2
-    point = point * (1 + distortion_parameters * r_square)
-    return point
+    m_r = 1 + k0 * r_square + k1 * r_square ** 2 # radial distortion model
+    distorted_points = points * m_r
+    return distorted_points
 
 def R_to_thetas(R, change_system):
     """
@@ -252,6 +259,68 @@ def thetas_to_R(thetas, change_system):
     if change_system:
         R = R * torch.tensor([1, 1, -1], dtype=torch.float32,device=thetas.device).unsqueeze(0).unsqueeze(0)
     return R
+
+def eulerAnglesToRotationMatrix(theta):
+    """
+    Function to convert rotation angle to rotation matrix
+    
+    Args:
+        theta (numpy.array): rotation angles
+    
+    Ref: https://learnopencv.com/rotation-matrix-to-euler-angles/
+    """
+    R_x = np.array([[1,         0,                  0                   ],
+                    [0,         math.cos(theta[0]), -math.sin(theta[0]) ],
+                    [0,         math.sin(theta[0]), math.cos(theta[0])  ]
+                    ])
+    R_y = np.array([[math.cos(theta[1]),    0,      math.sin(theta[1])  ],
+                    [0,                     1,      0                   ],
+                    [-math.sin(theta[1]),   0,      math.cos(theta[1])  ]
+                    ])
+    R_z = np.array([[math.cos(theta[2]),    -math.sin(theta[2]),    0],
+                    [math.sin(theta[2]),    math.cos(theta[2]),     0],
+                    [0,                     0,                      1]
+                    ])
+    R = np.dot(R_z, np.dot(R_y, R_x)) 
+    return R
+
+def isRotationMatrix(R):
+    """
+    Checks if a matrix is a valid rotation matrix.
+
+    Args:
+        R (numpy.array): rotation matrix
+    """
+    Rt = np.transpose(R)
+    shouldBeIdentity = np.dot(Rt, R)
+    I = np.identity(3, dtype=R.dtype)
+    n = np.linalg.norm(I - shouldBeIdentity)
+    return n < 1e-6
+
+def rotationMatrixToEulerAngles(R):
+    """
+    # Calculates rotation matrix to euler angles
+    # The result is the same as MATLAB except the order
+    # of the euler angles ( x and z are swapped ).
+    
+
+    """
+    assert(isRotationMatrix(R))
+ 
+    sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+ 
+    singular = sy < 1e-6
+ 
+    if  not singular :
+        x = math.atan2(R[2,1] , R[2,2])
+        y = math.atan2(-R[2,0], sy)
+        z = math.atan2(R[1,0], R[0,0])
+    else :
+        x = math.atan2(-R[1,2], R[1,1])
+        y = math.atan2(-R[2,0], sy)
+        z = 0
+ 
+    return np.array([x, y, z])
 
 def homography_equation(points0, points1):
     """
@@ -338,6 +407,9 @@ def saved_to_info(saved, n_cam):
     특히 minimap과 대응된 point_id의 경우 map_point_info에 저장된다.
     If point_id is saved based on cam_id, point_info is saved based on point_id.
     In particular, point_id corresponding to minimap is stored in map_point_info.
+    
+    point_info stores only points who have matching image points in at least two cameras
+    map_point_info stores the points of the minimap
 
     Args:
         points_dict (dict{cam_idx (int): dict{point_idx (int): (x (int/float), y (int/float))}}): point data
@@ -564,6 +636,46 @@ def normalize_points(points):
     points = points / mean_radius
     return points, mean_radius, center
 
+
+class my_loss():
+    def __init__(self, normalized_points_cam1_cam2_cam1, normalized_points_cam1_cam2_cam2):
+        self.normalized_points_cam1_cam2_cam1 = normalized_points_cam1_cam2_cam1
+        self.normalized_points_cam1_cam2_cam2 = normalized_points_cam1_cam2_cam2
+    
+    def loss(self, params):
+        fundamental_matrix, K0, K1, log_f0, log_f1 = np.split(params, [9, 10, 11, 12])
+        fundamental_matrix = fundamental_matrix.reshape(3,3)
+        f0 = np.exp(log_f0)
+        f1 = np.exp(log_f1)
+    
+        # Undistorted points
+        undistorted_points_cam1_cam2_cam1 = distort_point(self.normalized_points_cam1_cam2_cam1[:, 0:2], K0) / f0
+        undistorted_points_cam1_cam2_cam2 = distort_point(self.normalized_points_cam1_cam2_cam2[:, 0:2], K1) / f1
+        
+        # Homogeneous points
+        p1 = to_homogeneous(undistorted_points_cam1_cam2_cam1)
+        p2 = to_homogeneous(undistorted_points_cam1_cam2_cam2)
+
+        # Calculate fundamental matrix
+        fundamental_matrix, _ = cv2.findFundamentalMat(undistorted_points_cam1_cam2_cam1, undistorted_points_cam1_cam2_cam2, cv2.FM_LMEDS)
+        
+        u, s, v = np.linalg.svd(fundamental_matrix)
+        loss_E = (s[0] / s[1] - 1) ** 2 + (s[2] / s[1]) ** 2
+
+        # Algebraic Distance (https://arxiv.org/pdf/1706.07886.pdf)
+        # Reference: https://github.com/magicleap/SuperGluePretrainedNetwork/blob/ddcf11f42e7e0732a0c4607648f9448ea8d73590/models/utils.py#L369
+        Fp1 = np.dot(p1, fundamental_matrix.T) # N x 3
+        p2Fp1 = np.sum(p2 * Fp1, -1) # N
+
+        # Symmetric Epipolar Distance (https://arxiv.org/pdf/1706.07886.pdf)
+        Ftp2 = np.dot(p2, fundamental_matrix) # N x 3
+        d = p2Fp1 ** 2 * (1.0 / (Fp1[:, 0]**2 + Fp1[:, 1]**2) + 1.0 / (Ftp2[:, 0]**2 + Ftp2[:, 1]**2))
+
+        error = loss_E + np.sum(d)
+
+        return error
+
+
 class loss_essential_matrix():
     """
     essential matrix constraint, point correspondence constraint를 가장 잘 만족시키는 E, K,f를 찾는 함수
@@ -605,9 +717,12 @@ class loss_essential_matrix():
         u, s, v = torch.svd(fundamental_matrix)
 
         loss_E = (s[0] / s[1] - 1) ** 2 + (s[2] / s[1]) ** 2
-
+        
+        # Homogeneous points
         undistorted_points0 = F.pad(undistorted_points0, [0, 1], value=1)
         undistorted_points1 = F.pad(undistorted_points1, [0, 1], value=1)
+        
+        # Sampson Distance (https://arxiv.org/pdf/1706.07886.pdf)
         p1TF = torch.matmul(undistorted_points1.unsqueeze(1), fundamental_matrix.unsqueeze(0)).squeeze(1)
         Fp0 = torch.matmul(fundamental_matrix.unsqueeze(0), undistorted_points0.unsqueeze(2)).squeeze(2)
         p1TFp0 = torch.sum(undistorted_points1 * Fp0, dim=1, keepdim=True)
