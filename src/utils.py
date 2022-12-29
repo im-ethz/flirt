@@ -151,6 +151,23 @@ def normalize_points_by_image(points, cam_shape_xy):
     return normalized_points
 
 
+def unnormalize_points_by_image(points, cam_shape_xy):
+    """
+    Unnormalizes points with respect to the center of the camera
+
+    Args:
+        points (np.array): points on camera
+        cam_shape_xy (tuple): shape of camera
+
+    Returns:
+        unnormalized_points (np.array): unnormalized points
+    """
+    image_center = torch.tensor(cam_shape_xy, dtype=torch.float32) / 2
+    image_norm_length = torch.sqrt(torch.mean(image_center**2))
+    unnormalized_points = points * image_norm_length + image_center[None]
+    return unnormalized_points
+
+
 def optimize_parameters(parameters, loss_function, num_iter):
     """
     뉴턴법으로 local_minima 찾는 함수. 이 함수가 시간이 가장 오래 걸림
@@ -219,13 +236,20 @@ def distort_point(points, k0, k1=0):
     https://stackoverflow.com/questions/60609607/how-to-create-this-barrel-radial-distortion-with-python-opencv
     """
 
-    x = points[:, 0:1]
-    y = points[:, 1:2]
+    K = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
+    undistorted_points = cv2.fisheye.undistortPoints(
+        np.expand_dims(points.detach().numpy(), axis=1), K, np.array([k0.detach(), 0, 0, 0]), P=K
+    )
+    undistorted_points = torch.tensor(undistorted_points.squeeze(1))
+    return undistorted_points
 
-    r_square = x**2 + y**2
-    m_r = 1 + k0 * r_square + k1 * r_square**2  # radial distortion model
-    distorted_points = points * m_r
-    return distorted_points
+    # x = points[:, 0:1]
+    # y = points[:, 1:2]
+
+    # r_square = x**2 + y**2
+    # m_r = 1 + k0 * r_square + k1 * r_square**2  # radial distortion model
+    # distorted_points = points * m_r
+    # return distorted_points
 
 
 def R_to_thetas(R, change_system):
