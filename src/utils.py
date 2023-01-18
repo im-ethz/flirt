@@ -252,6 +252,35 @@ def distort_point(points, k0, k1=0):
     # return distorted_points
 
 
+def undistort_points(points, K, D, mode='fisheye', normalized=False):
+    """
+    Function to undistort points
+
+    Args:
+        points (np.array): points on camera
+        K (np.array): camera matrix
+        D (np.array): distortion coefficients
+        mode (str): fisheye or radial
+
+    Returns:
+        undistorted_points (np.array): undistorted points
+    """
+    # points should have shape: (-1, 1, 2)
+
+    if mode == 'fisheye':
+        if normalized:
+            undist_points = cv2.fisheye.undistortPoints(points, K, D)
+        else:
+            undist_points = cv2.fisheye.undistortPoints(points, K, D, P=K)
+    elif mode == 'radial':
+        raise NotImplementedError
+    else:
+        raise ValueError
+
+    # Return in shape (-1, 1, 2)
+    return undist_points
+
+
 def R_to_thetas(R, change_system):
     """
     Function to convert rotation matrix to rotation angle
@@ -732,45 +761,111 @@ def normalize_points(points):
     return points, mean_radius, center
 
 
+def in_front_of_both_cameras(first_points, second_points, rot, trans):
+    # check if the point correspondences are in front of both images
+    for first, second in zip(first_points, second_points):
+        first_z = np.dot(rot[0, :] - second[0] * rot[2, :], trans) / np.dot(rot[0, :] - second[0] * rot[2, :], second)
+        first_3d_point = np.array([first[0] * first_z, second[0] * first_z, first_z])
+        second_3d_point = np.dot(rot.T, first_3d_point) - np.dot(rot.T, trans)
+
+        if first_3d_point[2] < 0 or second_3d_point[2] < 0:
+            return False
+
+    return True
+
+
 class my_loss:
-    def __init__(self, normalized_points_cam1_cam2_cam1, normalized_points_cam1_cam2_cam2):
-        self.normalized_points_cam1_cam2_cam1 = normalized_points_cam1_cam2_cam1
-        self.normalized_points_cam1_cam2_cam2 = normalized_points_cam1_cam2_cam2
+    def __init__(
+        self,
+        cam0_points,
+        cam1_points,
+        cam0_cx,
+        cam0_cy,
+        cam1_cx,
+        cam1_cy,
+        cam0_img_norm_length,
+        cam1_img_norm_length,
+        cam0_mode='fisheye',
+        cam1_mode='fisheye',
+    ):
+        self.cam0_points = cam0_points
+        self.cam1_points = cam1_points
+
+        self.cam0_cx = cam0_cx
+        self.cam0_cy = cam0_cy
+        self.cam1_cx = cam1_cx
+        self.cam1_cy = cam1_cy
+
+        self.cam0_img_norm_length = cam0_img_norm_length
+        self.cam1_img_norm_length = cam1_img_norm_length
+
+        self.cam0_mode = cam0_mode
+        self.cam1_mode = cam1_mode
 
     def loss(self, params):
-        fundamental_matrix, K0, K1, log_f0, log_f1 = np.split(params, [9, 10, 11, 12])
-        fundamental_matrix = fundamental_matrix.reshape(3, 3)
-        f0 = np.exp(log_f0)
-        f1 = np.exp(log_f1)
 
-        # Undistorted points
-        undistorted_points_cam1_cam2_cam1 = distort_point(self.normalized_points_cam1_cam2_cam1[:, 0:2], K0) / f0
-        undistorted_points_cam1_cam2_cam2 = distort_point(self.normalized_points_cam1_cam2_cam2[:, 0:2], K1) / f1
+        cam0_f, cam1_f, cam0_k1, cam1_k1 = params
 
-        # Homogeneous points
-        p1 = to_homogeneous(undistorted_points_cam1_cam2_cam1)
-        p2 = to_homogeneous(undistorted_points_cam1_cam2_cam2)
-
-        # Calculate fundamental matrix
-        fundamental_matrix, _ = cv2.findFundamentalMat(
-            undistorted_points_cam1_cam2_cam1, undistorted_points_cam1_cam2_cam2, cv2.FM_LMEDS
+        # Construct camera matrix
+        cam0_K = np.array(
+            [
+                [cam0_f * self.cam0_img_norm_length, 0, self.cam0_cx],
+                [0, cam0_f * self.cam0_img_norm_length, self.cam0_cy],
+                [0, 0, 1],
+            ]
+        )
+        cam1_K = np.array(
+            [
+                [cam1_f * self.cam1_img_norm_length, 0, self.cam1_cx],
+                [0, cam1_f * self.cam1_img_norm_length, self.cam1_cy],
+                [0, 0, 1],
+            ]
         )
 
-        u, s, v = np.linalg.svd(fundamental_matrix)
+        # Construct distortion matrix
+        cam0_D = np.array([cam0_k1, 0, 0, 0])
+        cam1_D = np.array([cam1_k1, 0, 0, 0])
+
+        # Prepare the points shape (-1, 1, 2)
+        cam0_points = np.expand_dims(self.cam0_points[:, 0:2], axis=1).astype(np.float32)
+        cam1_points = np.expand_dims(self.cam1_points[:, 0:2], axis=1).astype(np.float32)
+
+        # Undistorted points
+        cam0_undist_points = undistort_points(cam0_points, cam0_K, cam0_D, mode=self.cam0_mode, normalized=True)
+        cam1_undist_points = undistort_points(cam1_points, cam1_K, cam1_D, mode=self.cam1_mode, normalized=True)
+
+        # Calculate fundamental matrix # Doesn't work :(
+        # fundamental_matrix, _ = cv2.findFundamentalMat(p0, p1, cv2.FM_LMEDS)
+        # if fundamental_matrix is None:
+        #     print("fail")
+        #     return 1e10
+
+        essential_matrix, _ = cv2.findEssentialMat(
+            points1=cam0_undist_points,
+            points2=cam1_undist_points,
+            cameraMatrix1=cam0_K,
+            distCoeffs1=cam0_D,
+            cameraMatrix2=cam1_K,
+            distCoeffs2=cam1_D,
+        )
+
+        u, s, v = np.linalg.svd(essential_matrix)
         loss_E = (s[0] / s[1] - 1) ** 2 + (s[2] / s[1]) ** 2
+
+        p0 = to_homogeneous(cam0_undist_points.squeeze(1))
+        p1 = to_homogeneous(cam1_undist_points.squeeze(1))
 
         # Algebraic Distance (https://arxiv.org/pdf/1706.07886.pdf)
         # Reference:
         # https://github.com/magicleap/SuperGluePretrainedNetwork/blob/ddcf11f42e7e0732a0c4607648f9448ea8d73590/models/utils.py#L369
-        Fp1 = np.dot(p1, fundamental_matrix.T)  # N x 3
-        p2Fp1 = np.sum(p2 * Fp1, -1)  # N
+        Fp0 = np.dot(p0, essential_matrix.T)  # N x 3
+        p1Fp0 = np.sum(p1 * Fp0, -1)  # N
 
         # Symmetric Epipolar Distance (https://arxiv.org/pdf/1706.07886.pdf)
-        Ftp2 = np.dot(p2, fundamental_matrix)  # N x 3
-        d = p2Fp1**2 * (1.0 / (Fp1[:, 0] ** 2 + Fp1[:, 1] ** 2) + 1.0 / (Ftp2[:, 0] ** 2 + Ftp2[:, 1] ** 2))
+        Ftp1 = np.dot(p1, essential_matrix)  # N x 3
+        d = p1Fp0**2 * (1.0 / (Fp0[:, 0] ** 2 + Fp0[:, 1] ** 2) + 1.0 / (Ftp1[:, 0] ** 2 + Ftp1[:, 1] ** 2))
 
         error = loss_E + np.sum(d)
-
         return error
 
 
