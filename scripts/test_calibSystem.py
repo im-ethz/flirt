@@ -50,7 +50,7 @@ def main():
     #     return
 
     # Try to get the homography from the neigboring cam
-    cam1_cam2minimap = calib.cam2minimap_from_neighboring_camera(cam_id=cam_id_1, cam_id_neighbor=cam_id_0)
+    cam1_cam2minimap = calib.cam2minimap_from_neighboring_camera(cam_id=cam_id_1, cam_id_neighbor=cam_id_0, mode='homography')
 
     img_0_path = base_path / 'images' / cam_id_0
     img_0 = cv2.imread(str(img_0_path))

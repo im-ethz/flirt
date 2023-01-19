@@ -1,5 +1,5 @@
 import os
-
+import sys
 import cv2
 import numpy as np
 from scipy.optimize import least_squares
@@ -264,6 +264,45 @@ class CalibSystem:
         self.cameras[cam_id_1].set_k1(k1_cam1)
         self.cameras[cam_id_1].set_calibrated(True)
 
+    def get_homography_between_2_cameras(self, cam_id_0, cam_id_1):
+        # Get the matching points of cam_id_0 and cam_id_1
+        matching_ids = self._get_matching_point_ids(cam_id_0, cam_id_1)
+        points_cam0 = np.array([self.cameras[cam_id_0].points[p_id] for p_id in matching_ids])
+        points_cam1 = np.array([self.cameras[cam_id_1].points[p_id] for p_id in matching_ids])
+
+        # Keep only points on the ground
+        mask0 = points_cam0[:, 2]==True
+        mask1 = points_cam1[:, 2]==True
+        assert sum(mask0^mask1)==0
+        points_cam0 = points_cam0[mask0]
+        points_cam1 = points_cam1[mask1]
+
+        # There must be more than 4 corresponding points to compute the homography:
+        if len(points_cam0) < 4:
+            return None, None
+        
+        # Cameras must be calibrated
+        if not (self.cameras[cam_id_0].calibrated and self.cameras[cam_id_1].calibrated):
+            print('[-] Cameras not calibrated')
+            return None, None
+        
+        # Expand the points
+        points_cam0 = np.expand_dims(points_cam0[:, 0:2], axis=1).astype(np.float32)
+        points_cam1 = np.expand_dims(points_cam1[:, 0:2], axis=1).astype(np.float32)
+        
+        # Undistort the points
+        undist_points_cam0 = undistort_points(
+            points_cam0, self.cameras[cam_id_0].K, self.cameras[cam_id_0].D, mode='fisheye', normalized=False
+        )
+        undist_points_cam1 = undistort_points(
+            points_cam1, self.cameras[cam_id_1].K, self.cameras[cam_id_1].D, mode='fisheye', normalized=False
+        )
+
+        # Compute the homography matrix
+        H, _ = cv2.findHomography(undist_points_cam1.reshape(-1, 2), undist_points_cam0.reshape(-1, 2), cv2.RANSAC, 1) # TODO: ransac reproj thresh as hyperparam (1 for now)
+
+        return H
+
     def get_rotation_translation_between_2_cameras(self, cam_id_0, cam_id_1):
         # Get the matching points of cam_id_0 and cam_id_1
         matching_ids = self._get_matching_point_ids(cam_id_0, cam_id_1)
@@ -369,34 +408,43 @@ class CalibSystem:
         self.cameras[cam_id].cam2minimap = cam2minimap
         return cam2minimap
 
-    def cam2minimap_from_neighboring_camera(self, cam_id, cam_id_neighbor):
+    def cam2minimap_from_neighboring_camera(self, cam_id, cam_id_neighbor, mode='homography'):
         # Check if the cam2minimap homography of the neighbouring cam is available
         if self.cameras[cam_id_neighbor].cam2minimap is None:
             print('[-] Homography of neighboring cam not available')
             return None
 
-        # Calculate rotation and translation between the two cams
-        R_cam2neighbor, t_cam2neighbor, success = self.get_rotation_translation_between_2_cameras(
-            cam_id_0=cam_id, cam_id_1=cam_id_neighbor
-        )
-        if not success:
-            R_neighbor2cam, t_neighbor2cam, success = self.get_rotation_translation_between_2_cameras(
-                cam_id_0=cam_id_neighbor, cam_id_1=cam_id
+        if mode == 'homography':
+            # Get simple homography
+            cam2neighbor = self.get_rotation_translation_between_2_cameras(
+                cam_id_0=cam_id, cam_id_1=cam_id_neighbor
             )
-            if success:
-                R_cam2neighbor = np.linalg.inv(R_neighbor2cam)
-                t_cam2neighbor = -t_neighbor2cam
-            else:
-                print('[-] get_rotation_translation_between_2_cameras failed')
-                return None
+            cam2minimap = self.cameras[cam_id_neighbor].cam2minimap @ cam2neighbor 
+            cam2minimap = cam2minimap/cam2minimap[-1, -1]
 
-        # Construct 2D? extrinsic matrix (for homography)
-        # cam2neighbor_extrinsic = np.vstack((np.hstack((R_cam2neighbor, t_cam2neighbor)), [0,0,0,1]))
-        cam2neighbor_extrinsic = np.hstack((R_cam2neighbor[:, :2], t_cam2neighbor))
+        elif mode == 'essential':
+            # Calculate rotation and translation between the two cams
+            R_cam2neighbor, t_cam2neighbor, success = self.get_rotation_translation_between_2_cameras(
+                cam_id_0=cam_id, cam_id_1=cam_id_neighbor
+            )
+            if not success:
+                R_neighbor2cam, t_neighbor2cam, success = self.get_rotation_translation_between_2_cameras(
+                    cam_id_0=cam_id_neighbor, cam_id_1=cam_id
+                )
+                if success:
+                    R_cam2neighbor = np.linalg.inv(R_neighbor2cam)
+                    t_cam2neighbor = -t_neighbor2cam
+                else:
+                    print('[-] get_rotation_translation_between_2_cameras failed')
+                    return None
 
-        # Construct 2D projection matrix, i.e. homography matrix H (3x3)
-        cam2neighbor = self.cameras[cam_id].K @ cam2neighbor_extrinsic[:3]
+            # Construct 2D? extrinsic matrix (for homography)
+            # cam2neighbor_extrinsic = np.vstack((np.hstack((R_cam2neighbor, t_cam2neighbor)), [0,0,0,1]))
+            cam2neighbor_extrinsic = np.hstack((R_cam2neighbor[:, :2], t_cam2neighbor))
 
-        cam2minimap = cam2neighbor @ self.cameras[cam_id_neighbor].cam2minimap
+            # Construct 2D projection matrix, i.e. homography matrix H (3x3)
+            cam2neighbor = self.cameras[cam_id].K @ cam2neighbor_extrinsic[:3]
+            cam2minimap = cam2neighbor @ self.cameras[cam_id_neighbor].cam2minimap
+        
         self.cameras[cam_id].cam2minimap = cam2minimap
         return cam2minimap
