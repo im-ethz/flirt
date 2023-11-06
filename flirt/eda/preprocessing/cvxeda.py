@@ -71,6 +71,16 @@ class CvxEda(SignalDecomposition):
         - A. Greco, G. Valenza, A. Lanata, E. P. Scilingo and L. Citi. cvxEDA: A Convex Optimization Approach to Electrodermal Activity Processing. IEEE Transactions on Biomedical Engineering. April 2016.
         - https://github.com/lciti/cvxEDA
         - Copyright (C) 2014-2015 Luca Citi, Alberto Greco
+
+        This program is free software; you can redistribute it and/or modify it under
+        the terms of the GNU General Public License as published by the Free Software
+        Foundation; either version 3 of the License, or (at your option) any later
+        version.
+        
+        If you use this program in support of published research, please include a
+        citation of the reference above. If you use this code in a software package,
+        please explicitly inform the end users of this copyright notice and ask them
+        to cite the reference above in their published research.
         """
 
         # Decompose data into tonic and phasic components
