@@ -110,10 +110,11 @@ def __cvx_eda(y, delta, tau0=2., tau1=0.7, delta_knot=10., alpha=8e-4, gamma=1e-
     authors' homepages). Copyright (C) 2014-2015 Luca Citi, Alberto Greco. This program is free software; you can redistribute it and/or modify it under 
     the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
-If you use this program in support of published research, please include a
-citation of the reference above. If you use this code in a software package,
-please explicitly inform the end users of this copyright notice and ask them
-to cite the reference above in their published research.
+    If you use this program in support of published research, please include a
+    citation of the reference above. If you use this code in a software package,
+    please explicitly inform the end users of this copyright notice and ask them
+    to cite the reference above in their published research.
+
     Arguments:
        y: observed EDA signal (we recommend normalizing it: y = zscore(y))
        delta: sampling interval (in seconds) of y
