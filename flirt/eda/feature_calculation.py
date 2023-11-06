@@ -107,7 +107,7 @@ def __cvx_eda(y, delta, tau0=2., tau1=0.7, delta_knot=10., alpha=8e-4, gamma=1e-
     This function implements the cvxEDA algorithm described in "cvxEDA: a
     Convex Optimization Approach to Electrodermal Activity Processing"
     (http://dx.doi.org/10.1109/TBME.2015.2474131, also available from the
-    authors' homepages).
+    authors' homepages). Copyright (C) 2014-2015 Luca Citi, Alberto Greco.
     Arguments:
        y: observed EDA signal (we recommend normalizing it: y = zscore(y))
        delta: sampling interval (in seconds) of y
