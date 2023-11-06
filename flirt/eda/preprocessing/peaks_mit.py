@@ -58,6 +58,7 @@ class ComputeMITPeaks(PeakFeatures):
         -----------
         - Taylor, S., Jaques, N., Chen, W., Fedor, S., Sano, A., & Picard, R. Automatic identification of artifacts in electrodermal activity data. In Engineering in Medicine and Biology Conference. 2015.
         - https://github.com/MITMediaLabAffectiveComputing/eda-explorer
+        - Copyright (c) 2016 Sara Taylor and Natasha Jaques. See eda_explorer/LICENCE.txt.
         """
 
         returned_peak_data = self.__find_peaks(data, mean_tonic)
