@@ -48,6 +48,7 @@ class LrDetector(ArtefactsDetection):
         -----------
         - Zhang, Y., Haghdan, M., & Xu, K. S. Unsupervised motion artifact detection in wrist-measured electrodermal activity data. In Proceedings of the 21st International Symposium on Wearable Computers. 2017.
         - https://github.com/IdeasLabUT/EDA-Artifact-Detection
+        - Copyright (c) 2017, Yuning Zhang, Maysam Haghdan, and Kevin S. Xu. All rights reserved.
         
         """
 
