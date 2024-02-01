@@ -136,6 +136,7 @@ def __cvx_eda(y, delta, tau0=2., tau1=0.7, delta_knot=10., alpha=8e-4, gamma=1e-
     """
 
     n = len(y)
+    y = y.astype(np.double)
     y = cvx.matrix(y)
 
     # bateman ARMA model
@@ -176,7 +177,7 @@ def __cvx_eda(y, delta, tau0=2., tau1=0.7, delta_knot=10., alpha=8e-4, gamma=1e-
     cvx.solvers.options.update(options)
     if solver == 'conelp':
         # Use conelp
-        z = lambda m, n: cvx.spmatrix([], [], [], (m, n))
+        def z(m, n): return cvx.spmatrix([], [], [], (m, n))
         G = cvx.sparse([[-A, z(2, n), M, z(nB + 2, n)], [z(n + 2, nC), C, z(nB + 2, nC)],
                         [z(n, 1), -1, 1, z(n + nB + 2, 1)], [z(2 * n + 2, 1), -1, 1, z(nB, 1)],
                         [z(n + 2, nB), B, z(2, nB), cvx.spmatrix(1.0, range(nB), range(nB))]])
