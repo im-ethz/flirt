@@ -136,7 +136,6 @@ def __cvx_eda(y, delta, tau0=2., tau1=0.7, delta_knot=10., alpha=8e-4, gamma=1e-
     """
 
     n = len(y)
-    y = y.astype(np.double)
     y = cvx.matrix(y)
 
     # bateman ARMA model
