@@ -2,7 +2,8 @@ from collections import namedtuple
 from typing import List
 
 import numpy as np
-from astropy.stats import LombScargle
+from astropy.timeseries import LombScargle
+#from astropy.stats import LombScargle
 from scipy import interpolate
 from scipy import signal
 
