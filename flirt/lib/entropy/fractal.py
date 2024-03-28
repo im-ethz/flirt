@@ -103,7 +103,7 @@ def katz_fd(x):
     return np.divide(ln, np.add(ln, np.log10(np.divide(d, ll))))
 
 
-@jit('float64(float64[:], int32)')
+@jit('float64(float64[:], int32)', nopython=False)
 def _higuchi_fd(x, kmax):
     """Utility function for `higuchi_fd`.
     """

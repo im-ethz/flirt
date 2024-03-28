@@ -6,7 +6,7 @@
 
 ![](https://github.com/im-ethz/flirt/raw/master/docs/img/flirt-header.png)
 
-⭐️ **Simple. Robust. Powerful.** 
+**Simple. Robust. Powerful.** 
 
 **FLIRT** is a **F**eature generation too**L**k**I**t for wea**R**able da**T**a such as that from your smartwatch or smart ring. With FLIRT you can
 easily transform wearable data into meaningful features which can then be used for example in machine learning or AI models.
@@ -17,7 +17,7 @@ FLIRT is an easy-to-use, robust and efficient feature generation toolkit for you
 
 ![FLIRT Workflow](https://github.com/im-ethz/flirt/raw/master/docs/img/flirt-workflow.png)
 
-➡️ **Are you ready to FLIRT with your wearable data?**
+**Are you ready to FLIRT with your wearable data?**
 
 ## Main Features
 A few things that FLIRT can do:
@@ -29,10 +29,10 @@ A few things that FLIRT can do:
   - Provide and prepare features in one comprehensive DataFrame, so that they can directly be used for further steps
     (e.g. training machine learning models)
 
-😎 FLIRT provides **high-level** implementations for fast and easy utilization of feature generators
+FLIRT provides **high-level** implementations for fast and easy utilization of feature generators
 (see [flirt.simple](https://flirt.readthedocs.io/en/latest/api.html#module-flirt.simple)).
 
-🤓 For advanced users, who wish to adapt algorithms and parameters do their needs, FLIRT also provides **low-level**
+For advanced users, who wish to adapt algorithms and parameters do their needs, FLIRT also provides **low-level**
 implementations.
 They allow for extensive configuration possibilities in feature generation and the specification of which algorithms to
 use for generating features.
@@ -51,7 +51,7 @@ git clone https://github.com/im-ethz/flirt
 
 
 # Quick example
-Generate a comprehensive set of features for an Empatica E4 data archive with a single line of code 🚀
+Generate a comprehensive set of features for an Empatica E4 data archive with a single line of code
 ```
 import flirt
 features = flirt.with_.empatica('./1234567890_A12345.zip')
@@ -66,7 +66,7 @@ Things FLIRT will be able to do in the future:
   - [ ] Feature generation for additional sensor modalities such as: blood oxygen saturation, blood volume changes, respiration rate, and step counts
 
 # Authors
-Made with ❤️ at [ETH Zurich](https://im.ethz.ch).
+Made with at [ETH Zurich](https://im.ethz.ch).
 
 Check out all [authors](https://github.com/im-ethz/flirt/tree/master/docs/authors.rst).
 
